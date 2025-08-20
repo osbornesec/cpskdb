@@ -177,6 +177,177 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 - Test applicability to current project context
 - Document assumptions and limitations
 
+## Git and GitHub Best Practices
+
+### Repository Information
+- **Repository URL**: https://github.com/osbornesec/cpskdb
+- **Owner**: Michael Osborne (michael@allthingsai.life)
+- **Project**: Agentic RAG System - Locally hosted, multi-product technical data retrieval system
+
+### Git Configuration
+- **User**: Michael Osborne
+- **Email**: michael@allthingsai.life
+- **Default Branch**: main
+- **Remote Origin**: https://github.com/osbornesec/cpskdb.git
+
+### Commit Standards
+
+**Commit Message Format:**
+```
+<type>: <subject>
+
+<body>
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Commit Types:**
+- `feat`: New feature implementation
+- `fix`: Bug fixes
+- `docs`: Documentation updates
+- `refactor`: Code refactoring without functionality changes
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks, dependencies, configuration
+- `perf`: Performance improvements
+- `style`: Code formatting, style changes
+
+**Example Commit Messages:**
+- `feat: implement Qdrant vector database client with batch processing`
+- `fix: resolve memory leak in embedding cache service`
+- `docs: add API documentation for query endpoints`
+- `refactor: extract document parsing logic into separate modules`
+
+### Branch Management
+
+**Branch Naming Convention:**
+- `feature/task-XX-description` - New features (e.g., `feature/task-95-fastapi-structure`)
+- `fix/issue-description` - Bug fixes (e.g., `fix/memory-leak-embeddings`)
+- `docs/description` - Documentation updates (e.g., `docs/api-reference`)
+- `refactor/description` - Code refactoring (e.g., `refactor/chunking-pipeline`)
+
+**Workflow:**
+1. Create feature branch from `main`
+2. Implement changes with TDD approach
+3. Commit frequently with descriptive messages
+4. Push branch and create Pull Request
+5. Code review and merge to `main`
+
+### Pull Request Standards
+
+**PR Title Format:**
+`[Task XX] Description of changes`
+
+**PR Description Template:**
+```markdown
+## Summary
+- Brief description of changes
+- Link to related task/issue
+
+## Changes Made
+- [ ] List of specific changes
+- [ ] Test coverage added/updated
+- [ ] Documentation updated
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Review Checklist
+- [ ] Code follows project conventions
+- [ ] Security considerations addressed
+- [ ] Performance impact assessed
+- [ ] Breaking changes documented
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+```
+
+### Git Security Best Practices
+
+**Never Commit:**
+- API keys, tokens, or credentials
+- Environment files (.env) with secrets
+- Large model files or datasets
+- Personal or sensitive information
+- Database dumps or backups
+
+**Pre-commit Checks:**
+- Verify .gitignore patterns are working
+- Run `git status` to review staged files
+- Check for secrets with `git diff --cached`
+- Ensure commit messages are descriptive
+
+### File Management
+
+**Always Ignore:**
+- Python bytecode (`__pycache__/`, `*.pyc`)
+- Virtual environments (`.venv/`, `venv/`)
+- IDE configuration files (`.vscode/`, `.idea/`)
+- OS-specific files (`.DS_Store`, `Thumbs.db`)
+- Logs and temporary files (`*.log`, `tmp/`)
+- AI/ML artifacts (`models/`, `*.pkl`, `embeddings/`)
+- Database files (`*.db`, `dump.rdb`, `qdrant_data/`)
+
+**Track in Git:**
+- Source code and configuration templates
+- Documentation and README files
+- Test files and test data (small samples only)
+- Build scripts and deployment configurations
+- Project structure and dependency files
+
+### Collaboration Guidelines
+
+**Code Review Requirements:**
+- All changes must go through Pull Requests
+- At least one reviewer approval required
+- Automated tests must pass
+- Security scan must pass
+- Documentation must be updated
+
+**Issue Management:**
+- Link commits to issues/tasks when applicable
+- Use issue templates for consistency
+- Label issues appropriately (bug, enhancement, documentation)
+- Close issues via commit messages: `fixes #123`
+
+### Backup and Recovery
+
+**Repository Backup:**
+- Primary: GitHub remote repository
+- Local: Multiple clones on different machines
+- Archive: Periodic downloads of repository state
+
+**Recovery Procedures:**
+- Lost work: Check `git reflog` for recent commits
+- Corrupted repository: Clone fresh from GitHub
+- Accidental commits: Use `git revert` instead of `git reset`
+- Secret exposure: Rotate credentials immediately, use `git filter-branch` if needed
+
+### Integration with Development Workflow
+
+**Daily Git Operations:**
+```bash
+# Start of day
+git pull origin main
+git status
+
+# During development
+git add .
+git commit -m "descriptive message"
+git push origin feature-branch
+
+# End of task
+git push origin feature-branch
+# Create PR via GitHub CLI or web interface
+```
+
+**Emergency Procedures:**
+- **Exposed Secret**: Immediately rotate credentials, remove from history
+- **Broken main**: Revert problematic commit, investigate cause
+- **Merge Conflicts**: Resolve locally, test thoroughly before pushing
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 ALWAYS use @agent-context7-docs-searcher BEFORE writing any code.
