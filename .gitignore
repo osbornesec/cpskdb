@@ -1,0 +1,472 @@
+# =============================================================================
+# COMPREHENSIVE .GITIGNORE FOR PYTHON RAG SYSTEM
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# PYTHON-SPECIFIC IGNORES
+# -----------------------------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff (if using Django components)
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff (if using Flask components)
+instance/
+.webassets-cache
+
+# Scrapy stuff (if using Scrapy)
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm (JetBrains IDEs)
+.idea/
+
+# -----------------------------------------------------------------------------
+# FASTAPI & WEB FRAMEWORK SPECIFIC
+# -----------------------------------------------------------------------------
+
+# FastAPI generated OpenAPI files
+openapi.json
+openapi.yaml
+
+# Uvicorn logs
+uvicorn.log
+
+# Gunicorn logs
+gunicorn.log
+gunicorn.pid
+
+# Static files (if serving static content)
+/static/
+/media/
+
+# -----------------------------------------------------------------------------
+# AI/ML & RAG SYSTEM SPECIFIC
+# -----------------------------------------------------------------------------
+
+# Model files and checkpoints
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.model
+*.bin
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.pb
+
+# Ollama models (large files)
+ollama_models/
+.ollama/
+
+# Hugging Face cache
+.cache/huggingface/
+transformers_cache/
+
+# Vector embeddings and indexes
+embeddings/
+*.faiss
+*.ann
+*.idx
+vector_store/
+
+# Training data and datasets (customize based on your data)
+data/raw/
+data/processed/
+datasets/
+training_data/
+*.csv
+*.json
+*.jsonl
+*.parquet
+*.arrow
+
+# Experiment tracking
+mlruns/
+.mlflow/
+wandb/
+.neptune/
+tensorboard_logs/
+lightning_logs/
+
+# Model artifacts and outputs
+models/
+checkpoints/
+artifacts/
+outputs/
+results/
+
+# Jupyter notebook outputs
+*.ipynb
+
+# -----------------------------------------------------------------------------
+# DATABASE & CACHE SPECIFIC
+# -----------------------------------------------------------------------------
+
+# PostgreSQL
+*.sql
+*.dump
+*.backup
+pg_data/
+postgres_data/
+
+# Qdrant vector database
+qdrant_storage/
+qdrant_data/
+.qdrant/
+
+# Redis dumps
+dump.rdb
+*.rdb
+redis_data/
+
+# SQLite (if used for development)
+*.db
+*.sqlite
+*.sqlite3
+
+# -----------------------------------------------------------------------------
+# DOCKER & CONTAINERIZATION
+# -----------------------------------------------------------------------------
+
+# Docker volumes and data
+docker_data/
+postgres_data/
+redis_data/
+qdrant_data/
+
+# Docker compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Docker build context ignores
+.dockerignore
+
+# -----------------------------------------------------------------------------
+# CONFIGURATION & SECRETS
+# -----------------------------------------------------------------------------
+
+# Environment files with secrets
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.*.local
+
+# Configuration files with sensitive data
+config.ini
+config.yaml
+config.json
+secrets.yaml
+secrets.json
+
+# API keys and tokens
+*.key
+*.pem
+*.crt
+*.p12
+api_keys.txt
+tokens.txt
+
+# OAuth and authentication
+.auth/
+credentials.json
+client_secret.json
+
+# -----------------------------------------------------------------------------
+# LOGS & TEMPORARY FILES
+# -----------------------------------------------------------------------------
+
+# Application logs
+logs/
+*.log
+log_*.txt
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+
+# System temporary files
+*.swp
+*.swo
+*~
+
+# Lock files
+*.lock
+
+# -----------------------------------------------------------------------------
+# IDE & EDITOR FILES
+# -----------------------------------------------------------------------------
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Atom
+.atom/
+
+# -----------------------------------------------------------------------------
+# OPERATING SYSTEM FILES
+# -----------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# -----------------------------------------------------------------------------
+# MONITORING & PERFORMANCE
+# -----------------------------------------------------------------------------
+
+# Prometheus metrics
+metrics.txt
+*.prom
+
+# Performance profiling
+*.prof
+*.profile
+profiling_data/
+
+# Health check endpoints
+health.txt
+status.json
+
+# -----------------------------------------------------------------------------
+# TESTING & CI/CD
+# -----------------------------------------------------------------------------
+
+# Test coverage
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+htmlcov/
+
+# Test results
+test-results/
+.pytest_cache/
+.tox/
+
+# CI/CD artifacts
+.github/workflows/*.log
+.gitlab-ci-local/
+
+# -----------------------------------------------------------------------------
+# DOCUMENTATION
+# -----------------------------------------------------------------------------
+
+# Generated documentation
+docs/_build/
+docs/build/
+site/
+
+# -----------------------------------------------------------------------------
+# CUSTOM PROJECT PATTERNS (CUSTOMIZE AS NEEDED)
+# -----------------------------------------------------------------------------
+
+# Your specific data directories
+# my_custom_data/
+# proprietary_models/
+# client_data/
+
+# Your specific config files
+# my_app_config.yaml
+# custom_settings.json
