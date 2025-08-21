@@ -41,15 +41,15 @@ def is_technical_term(text: str) -> bool:
     if text.lower().strip() in personal_dict:
         return True
 
-    # Additional hardcoded terms as fallback
-    fallback_terms = {
+    # Additional hardcoded terms
+    hardcoded_terms = {
         "postgresql",
         "cohere",
         "voyage",
         "embeddings",
         "vectorstore",
         "chunking",
-        "nodejs",
+        "Node.js",
         "javascript",
         "typescript",
         "python",
@@ -60,7 +60,7 @@ def is_technical_term(text: str) -> bool:
         "microservices",
     }
 
-    return text.lower().strip() in fallback_terms
+    return text.lower().strip() in hardcoded_terms
 
 
 def should_ignore_rule(rule_id: str, message: str, text: str) -> bool:
@@ -124,9 +124,14 @@ def main():
     try:
         tool = language_tool_python.LanguageTool("en-US")
         print("Using LanguageTool local server")
-    except Exception as e:
-        print(f"Failed to initialize LanguageTool: {e}")
-        return
+    except Exception as e:  # noqa: BLE001
+        print(f"Local server failed ({e}); falling back to Public API")
+        try:
+            tool = language_tool_python.LanguageToolPublicAPI("en-US")
+            print("Using LanguageTool Public API")
+        except Exception as e2:  # noqa: BLE001
+            print(f"Failed to initialize LanguageTool: {e2}")
+            return
 
     # Check main documentation files
     files_to_check = ["README.md", "CLAUDE.md"]

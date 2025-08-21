@@ -5,6 +5,8 @@ Run LanguageTool against codebase documentation and comments.
 
 import sys
 from pathlib import Path
+import ast
+import tokenize
 
 try:
     import language_tool_python  # type: ignore
@@ -14,50 +16,52 @@ except ImportError:
 
 
 def extract_comments_from_python(file_path: str) -> list[tuple[str, int]]:
-    """Extract comments and docstrings from Python files."""
-    comments = []
+    """Extract comments and docstrings from Python files using tokenize and ast."""
+    results: list[tuple[str, int]] = []
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+        # Comments via tokenize
+        with open(file_path, "rb") as binary_fh:
+            for tok in tokenize.tokenize(binary_fh.readline):
+                if tok.type == tokenize.COMMENT:
+                    if tok.start[0] == 1 and tok.string.startswith("#!"):
+                        continue  # skip shebang
+                    text = tok.string.lstrip("#").strip()
+                    if text and not text.startswith("!"):
+                        results.append((text, tok.start[0]))
+    except Exception as e:  # noqa: BLE001
+        print(f"Error tokenizing {file_path}: {e}")
 
-        in_docstring = False
-        docstring_delimiter = None
+    try:
+        # Docstrings via ast
+        with open(file_path, encoding="utf-8") as text_fh:
+            source = text_fh.read()
+        tree = ast.parse(source, filename=file_path)
 
-        for i, line in enumerate(lines, 1):
-            # Single line comments
-            if "#" in line:
-                comment_part = line[line.index("#") :].strip("#").strip()
-                if comment_part and not comment_part.startswith("!"):
-                    comments.append((comment_part, i))
+        def add_docstring(node: ast.AST) -> None:
+            if not isinstance(
+                node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+            ):
+                return
+            doc = ast.get_docstring(node, clean=False)
+            if not doc:
+                return
+            # Docstring node is the first statement if present
+            first_stmt = getattr(node, "body", [])[:1]
+            if first_stmt and isinstance(first_stmt[0], ast.Expr):
+                value = first_stmt[0].value
+                lineno = getattr(value, "lineno", getattr(node, "lineno", 1))  # type: ignore[attr-defined]
+                results.append((doc.strip(), lineno))
 
-            # Docstrings (simplified detection)
-            if '"""' in line or "'''" in line:
-                delimiter = '"""' if '"""' in line else "'''"
-                if not in_docstring:
-                    in_docstring = True
-                    docstring_delimiter = delimiter
-                    # Extract content after opening delimiter
-                    after_delimiter = line.split(delimiter, 1)[1]
-                    if delimiter in after_delimiter:  # Single line docstring
-                        docstring_content = after_delimiter.split(delimiter)[0].strip()
-                        if docstring_content:
-                            comments.append((docstring_content, i))
-                        in_docstring = False
-                elif delimiter == docstring_delimiter:
-                    in_docstring = False
-                    # Extract content before closing delimiter
-                    before_delimiter = line.split(delimiter)[0].strip()
-                    if before_delimiter:
-                        comments.append((before_delimiter, i))
-            elif in_docstring:
-                content = line.strip()
-                if content:
-                    comments.append((content, i))
+        # Module
+        add_docstring(tree)
+        # Classes and functions
+        for n in ast.walk(tree):
+            if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                add_docstring(n)
+    except Exception as e:  # noqa: BLE001
+        print(f"Error parsing AST for {file_path}: {e}")
 
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-
-    return comments
+    return results
 
 
 def check_file_with_languagetool(file_path: str, tool) -> list:

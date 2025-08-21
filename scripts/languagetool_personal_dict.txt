@@ -25,7 +25,18 @@ rerankers
 FIXME
 TODO
 api-reference
-- Ollama
+PostToolUse
+mypy
+subprocess
+bool
+MORFOLOGIK
+errorLength
+offset
+docstrings
+readline
+noqa
+isinstance
+startswith
 
 # Development Terms
 API
@@ -41,8 +52,6 @@ reflog
 grep
 serena
 cpskdb
-reranking
-rerankers
 
 # File Extensions and Formats
 yaml
@@ -66,7 +75,7 @@ rag
 embeddings
 vectorstore
 chunking
-nodejs
+Node.js
 javascript
 typescript
 python

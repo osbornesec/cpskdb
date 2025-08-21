@@ -1,0 +1,11 @@
+# Core dependencies for the CPSKDB project
+# Use pip-compile to generate requirements.txt from this file
+
+# LanguageTool for grammar checking
+language_tool_python==2.9.4
+
+# Additional core dependencies would go here as the project grows
+# Example:
+# fastapi>=0.68.0
+# uvicorn>=0.15.0
+# qdrant-client>=1.0.0

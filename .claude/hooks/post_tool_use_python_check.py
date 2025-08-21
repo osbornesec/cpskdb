@@ -26,9 +26,9 @@ SERENA_MODIFICATION_TOOLS = [
 ]
 
 
-def get_modified_files(tool_name, tool_input):
+def get_modified_files(tool_name: str, tool_input: dict) -> tuple[list[str], list[str]]:
     """Extract file paths that were modified."""
-    files = []
+    files: list[str] = []
 
     if tool_name in FILE_MODIFICATION_TOOLS:
         # Standard file modification tools
@@ -53,9 +53,9 @@ def get_modified_files(tool_name, tool_input):
     return python_files, markdown_files
 
 
-def run_ruff(file_path):
+def run_ruff(file_path: str) -> list[str]:
     """Run ruff linter and formatter on a Python file."""
-    errors = []
+    errors: list[str] = []
 
     # Run ruff check (linting)
     try:
@@ -91,9 +91,9 @@ def run_ruff(file_path):
     return errors
 
 
-def run_mypy(file_path):
+def run_mypy(file_path: str) -> list[str]:
     """Run mypy type checker on a Python file."""
-    errors = []
+    errors: list[str] = []
 
     try:
         result = subprocess.run(
@@ -111,13 +111,13 @@ def run_mypy(file_path):
     return errors
 
 
-def run_markdownlint(file_path):
+def run_markdownlint(file_path: str) -> list[str]:
     """Run markdownlint-cli2 on a Markdown file."""
-    errors = []
+    errors: list[str] = []
 
     try:
         result = subprocess.run(
-            ["npx", "markdownlint-cli2", file_path],
+            ["npx", "--yes", "markdownlint-cli2", file_path],
             capture_output=True,
             text=True,
             timeout=30,
@@ -129,15 +129,15 @@ def run_markdownlint(file_path):
         errors.append(f"Markdownlint timed out for {file_path}")
     except FileNotFoundError:
         errors.append("npx not found. Install Node.js and npm/npx")
-    except Exception as e:
-        errors.append(f"Markdownlint error: {e}")
+    except OSError as e:
+        errors.append(f"Markdownlint execution error: {e}")
 
     return errors
 
 
-def run_languagetool(file_path):
+def run_languagetool(file_path: str) -> list[str]:
     """Run LanguageTool filtered check on a file."""
-    errors = []
+    errors: list[str] = []
 
     try:
         # Find project root (where .claude directory is)
@@ -153,19 +153,18 @@ def run_languagetool(file_path):
 
         # Check if we're in a virtual environment with LanguageTool
         venv_python = project_root / ".venv" / "bin" / "python"
-        if venv_python.exists():
-            python_cmd = str(venv_python)
-        else:
-            python_cmd = "python3"
+        python_cmd = str(venv_python) if venv_python.exists() else "python3"
 
         # Create a temporary version of the script that only checks one file
+        # Escape the file path to prevent injection
+        escaped_file_path = repr(str(file_path))
         temp_script = f'''
 import sys
 sys.path.insert(0, "{script_path.parent}")
 from filter_language_issues import check_text_filtered, language_tool_python
 from pathlib import Path
 
-file_path = "{file_path}"
+file_path = {escaped_file_path}
 try:
     tool = language_tool_python.LanguageTool("en-US")
     with open(file_path, "r", encoding="utf-8") as f:
@@ -203,7 +202,7 @@ except Exception as e:
     return errors
 
 
-def main():
+def main() -> None:
     try:
         input_data = json.loads(sys.stdin.read())
     except json.JSONDecodeError as e:
