@@ -13,49 +13,39 @@ except ImportError:
     sys.exit(1)
 
 
+def load_personal_dictionary() -> set:
+    """Load personal dictionary from file."""
+    dict_file = Path(__file__).parent / "languagetool_personal_dict.txt"
+    technical_terms = set()
+
+    if dict_file.exists():
+        try:
+            with open(dict_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if line and not line.startswith("#"):
+                        technical_terms.add(line.lower())
+        except Exception:
+            pass  # Silently ignore errors
+
+    return technical_terms
+
+
 def is_technical_term(text: str) -> bool:
     """Check if text is likely a technical term that should be ignored."""
-    technical_terms = {
-        "fastapi",
-        "langraph",
-        "qdrant",
-        "redis",
-        "ollama",
-        "reranking",
-        "rerankers",
+    # Load personal dictionary
+    personal_dict = load_personal_dictionary()
+
+    # Check against personal dictionary
+    if text.lower().strip() in personal_dict:
+        return True
+
+    # Additional hardcoded terms as fallback
+    fallback_terms = {
         "postgresql",
         "cohere",
         "voyage",
-        "uvicorn",
-        "gunicorn",
-        "pydantic",
-        "pytest",
-        "api",
-        "apis",
-        "cpu",
-        "gpu",
-        "json",
-        "yaml",
-        "yml",
-        "csv",
-        "sql",
-        "http",
-        "https",
-        "url",
-        "uri",
-        "cli",
-        "gui",
-        "uuid",
-        "jwt",
-        "oauth",
-        "tdd",
-        "ci",
-        "cd",
-        "mcp",
-        "llm",
-        "ml",
-        "ai",
-        "rag",
         "embeddings",
         "vectorstore",
         "chunking",
@@ -69,7 +59,8 @@ def is_technical_term(text: str) -> bool:
         "containerization",
         "microservices",
     }
-    return text.lower().strip() in technical_terms
+
+    return text.lower().strip() in fallback_terms
 
 
 def should_ignore_rule(rule_id: str, message: str, text: str) -> bool:

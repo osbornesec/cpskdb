@@ -46,7 +46,7 @@ Built on LangGraph for orchestrated agent workflows:
 ```text
 Documents → Parse → Chunk → Embed → Qdrant
     ↓
-Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
+Query → Intent → Route → Retrieve → Reranking → Generate → Validate → Response
 ```
 
 ## 📦 Installation

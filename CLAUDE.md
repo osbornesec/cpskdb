@@ -50,7 +50,7 @@ Built on LangGraph for orchestrated agent workflows:
 ```text
 Documents → Parse → Chunk → Embed → Qdrant
     ↓
-Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
+Query → Intent → Route → Retrieve → Reranking → Generate → Validate → Response
 ```
 
 ## Directory Structure
@@ -365,7 +365,7 @@ etc.) only as fallbacks.
 
   recursive=true)`
 
-  - Lists non-gitignored files and directories
+  - Lists non-git ignored files and directories
   
 - **Find files**: `mcp__serena__find_file(file_mask="*.py", relative_path=".")`
   - Finds files matching patterns using wildcards
@@ -745,5 +745,5 @@ git push origin feature-branch
 
 Do what has been asked; nothing more, nothing less.
 ALWAYS use @agent-context7-docs-searcher BEFORE writing any code.
-ALWAYS use Serena MCP for code operations, traditional tools as fallback only.
-ALWAYS use @agent-context7-docs-searcher for ALL documentation research.
+Use Serena MCP for code operations, with traditional tools as fallback only.
+For ALL documentation research, use @agent-context7-docs-searcher.
