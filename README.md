@@ -118,6 +118,7 @@ LOG_LEVEL=INFO
 ## 📚 API Documentation
 
 The system provides comprehensive API documentation:
+
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
 - **OpenAPI Schema**: `http://localhost:8000/openapi.json`
