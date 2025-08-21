@@ -1,3 +1,255 @@
+# Agentic RAG System - Project Documentation
+
+## Project Overview
+Building a locally hosted, agentic Retrieval-Augmented Generation (RAG) system for multi-product technical data with high accuracy, auditability, and data privacy.
+
+## Architecture
+
+### System Design
+The system implements an agentic RAG architecture with the following data flow:
+
+1. **Document Ingestion**: Parse, chunk, and embed documents into vector storage
+2. **Query Processing**: Analyze user intent and route to appropriate agents
+3. **Knowledge Retrieval**: Vector search with reranking for relevant context
+4. **Response Generation**: Multi-agent synthesis with validation
+5. **Audit & Feedback**: Track citations and collect user feedback
+
+### Multi-Agent Framework
+Built on LangGraph for orchestrated agent workflows:
+
+- **Supervisor Agent**: Intent classification and routing logic
+- **Product Specialist Agents**: Domain-specific knowledge retrieval
+- **Cross-Reference Agent**: Inter-product comparisons and correlations  
+- **Synthesis Agent**: Context aggregation and response generation
+- **Validation Agent**: Quality assurance and guardrails
+
+### Technology Stack
+**Core Infrastructure:**
+- FastAPI: REST API with async support
+- Qdrant: Vector database for embeddings
+- PostgreSQL: Metadata, logs, and relationships
+- Redis: Caching and session storage
+- Ollama: Local LLM (GPT-OSS-20B)
+
+**AI/ML Components:**
+- LangGraph: Agent orchestration framework
+- Voyage AI: Production embedding service
+- Cohere: Reranking for improved relevance
+- Custom chunking: Semantic and structural strategies
+
+**Data Flow:**
+```
+Documents → Parse → Chunk → Embed → Qdrant
+    ↓
+Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
+```
+
+## Directory Structure
+```
+.
+├── src/                 # Main application source code
+│   ├── api/            # FastAPI routes and endpoints
+│   │   ├── routes/     # Individual route modules
+│   │   ├── middleware/ # Custom middleware
+│   │   └── dependencies.py # Shared dependencies
+│   ├── agents/         # LangGraph agents and workflows
+│   │   ├── supervisor/ # Main routing agent
+│   │   ├── specialists/# Product-specific agents
+│   │   ├── synthesis/  # Response generation agents
+│   │   └── validation/ # Quality assurance agents
+│   ├── ingestion/      # Document processing pipeline
+│   │   ├── parsers/    # Document format parsers
+│   │   ├── chunkers/   # Text chunking strategies
+│   │   └── pipeline.py # Orchestration logic
+│   ├── embeddings/     # Embedding services (Voyage AI, local)
+│   │   ├── providers/  # Different embedding providers
+│   │   ├── cache/      # Embedding caching layer
+│   │   └── service.py  # Main embedding service
+│   ├── retrieval/      # Vector search and ranking
+│   │   ├── vector_store.py # Qdrant client
+│   │   ├── rerankers/  # Cohere and other rerankers
+│   │   └── search.py   # Search orchestration
+│   └── models/         # Pydantic models and schemas
+│       ├── requests.py # API request models
+│       ├── responses.py# API response models
+│       └── database.py # Database models
+├── tests/              # Test suite
+│   ├── unit/          # Unit tests for individual modules
+│   ├── integration/   # Integration tests for service interactions
+│   └── e2e/           # End-to-end workflow tests
+├── docker/             # Container configurations
+│   ├── Dockerfile     # Application container
+│   ├── docker-compose.yml # Development environment
+│   └── docker-compose.prod.yml # Production environment
+├── config/             # Configuration files
+│   ├── settings.py    # Application settings
+│   ├── database.py    # Database configuration
+│   └── logging.py     # Logging configuration
+├── scripts/            # Utility and deployment scripts
+│   ├── deploy.sh      # Deployment automation
+│   ├── backup.sh      # Database backup scripts
+│   └── migrate.sh     # Database migration scripts
+└── docs/               # Project documentation
+    ├── api/           # API documentation
+    ├── architecture/  # System design documents
+    └── deployment/    # Deployment guides
+```
+
+**Key Directory Purposes:**
+- **src/**: Contains all application source code, organized by functional area
+- **tests/**: Comprehensive test suite with unit, integration, and e2e tests
+- **docker/**: Containerization configs for development and production
+- **config/**: Centralized configuration management
+- **scripts/**: Automation scripts for deployment and maintenance
+- **docs/**: Technical documentation and guides
+
+## Configuration Management
+
+### Environment Variables
+Core configuration through environment files:
+
+**Required Variables:**
+```bash
+# Database Configuration
+POSTGRES_URL=postgresql://user:pass@localhost:5432/cpskdb
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+REDIS_URL=redis://localhost:6379
+
+# AI Services
+VOYAGE_API_KEY=voyage_key_here
+COHERE_API_KEY=cohere_key_here
+OLLAMA_HOST=http://localhost:11434
+
+# Application Settings
+API_VERSION=v1
+DEBUG=false
+LOG_LEVEL=INFO
+CORS_ORIGINS=["http://localhost:3000"]
+```
+
+**Optional Variables:**
+```bash
+# Performance Tuning
+EMBEDDING_BATCH_SIZE=128
+VECTOR_SEARCH_LIMIT=50
+CACHE_TTL=3600
+
+# Feature Flags
+ENABLE_RERANKING=true
+ENABLE_QUERY_CACHE=true
+ENABLE_METRICS=true
+```
+
+### Configuration Structure
+**Pydantic Settings Classes:**
+- `DatabaseSettings`: Connection configs and pool settings
+- `EmbeddingSettings`: Provider configs and rate limits
+- `AgentSettings`: LLM parameters and workflow configs
+- `APISettings`: Server configs and middleware settings
+
+### Development Environment
+Docker Compose setup for local development:
+
+**Services:**
+- **Qdrant** (port 6333): Vector database with persistence
+- **PostgreSQL** (port 5432): Metadata and audit logs
+- **Redis** (port 6379): Caching and session storage
+- **Ollama** (port 11434): Local LLM inference
+
+**Setup Commands:**
+```bash
+# Start all services
+docker-compose up -d
+
+# Initialize database
+python scripts/init_db.py
+
+# Run application
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## API Documentation
+RESTful API with OpenAPI documentation available at `/docs`:
+
+**Core Endpoints:**
+- `POST /api/v1/query` - Submit queries to the RAG system
+- `GET /api/v1/query/{query_id}` - Retrieve query results and status
+- `POST /api/v1/query/batch` - Batch query processing
+- `GET /api/v1/citations/{query_id}` - Get source citations
+- `POST /api/v1/feedback` - Submit feedback on responses
+
+**Ingestion Endpoints:**
+- `POST /api/v1/ingest/document` - Single document upload
+- `POST /api/v1/ingest/batch` - Batch document processing
+- `GET /api/v1/ingest/status/{job_id}` - Check ingestion status
+
+**System Endpoints:**
+- `GET /health` - Basic health check
+- `GET /health/ready` - Readiness probe for K8s
+- `GET /health/metrics` - Prometheus metrics
+
+## Testing Strategy
+Comprehensive test coverage across all system layers:
+
+**Unit Tests (`tests/unit/`):**
+- Component-level testing for individual modules
+- Mock external dependencies (APIs, databases)
+- Fast execution for TDD workflow
+
+**Integration Tests (`tests/integration/`):**
+- Service interaction testing
+- Database integration with test containers
+- API endpoint testing with test clients
+
+**End-to-End Tests (`tests/e2e/`):**
+- Complete workflow validation
+- Real service dependencies
+- Performance and load testing
+
+**Test Commands:**
+```bash
+# Run all tests
+pytest tests/
+
+# Run specific test types
+pytest tests/unit/
+pytest tests/integration/
+pytest tests/e2e/
+
+# Run with coverage
+pytest --cov=src tests/
+```
+
+## Claude Code Integration
+
+### MCP Server Configuration
+This project leverages Serena MCP for semantic code operations:
+
+**Primary Tools:**
+- `mcp__serena__find_symbol` - Locate code symbols
+- `mcp__serena__replace_symbol_body` - Edit functions/classes
+- `mcp__serena__search_for_pattern` - Pattern-based search
+- `mcp__serena__get_symbols_overview` - File structure analysis
+
+**Memory Management:**
+- Project knowledge stored in `.claude/memories/`
+- Architecture patterns documented for reuse
+- Task completion tracking with persistent state
+
+### Subagent Integration
+**@agent-context7-docs-searcher** for documentation research:
+- FastAPI best practices and patterns
+- LangGraph agent development
+- Vector database optimization
+- ML/AI system architecture
+
+**Development Workflow:**
+1. Use @agent-context7-docs-searcher for research
+2. Apply Serena MCP for code implementation
+3. Follow TDD with comprehensive test coverage
+4. Document patterns in project memories
+
 # CRITICAL: CODE OPERATIONS RULE
   For ALL code search and editing operations:
   1. Use Serena MCP tools (find_symbol, replace_symbol_body, etc.) as PRIMARY method
