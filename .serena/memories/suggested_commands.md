@@ -1,6 +1,7 @@
 # Suggested Development Commands
 
 ## Project Setup
+
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -12,6 +13,7 @@ pip install -r requirements.txt
 ```
 
 ## Docker Services
+
 ```bash
 # Start all services
 docker-compose up -d
@@ -27,6 +29,7 @@ docker-compose ps
 ```
 
 ## Code Quality Commands
+
 ```bash
 # Format code with black
 black src/ tests/
@@ -43,6 +46,7 @@ pre-commit run --all-files
 ```
 
 ## Testing Commands
+
 ```bash
 # Run all tests
 pytest
@@ -63,6 +67,7 @@ pytest tests/unit/test_embeddings.py
 ```
 
 ## Database Commands
+
 ```bash
 # Run migrations
 alembic upgrade head
@@ -75,6 +80,7 @@ alembic downgrade -1
 ```
 
 ## Development Server
+
 ```bash
 # Run FastAPI development server
 uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
@@ -84,6 +90,7 @@ python -m src.api.main
 ```
 
 ## Ollama Model Management
+
 ```bash
 # Pull model
 ollama pull gpt-oss-20b
@@ -96,6 +103,7 @@ ollama run gpt-oss-20b
 ```
 
 ## Git Commands
+
 ```bash
 # Check status
 git status
@@ -111,6 +119,7 @@ git push origin main
 ```
 
 ## Makefile Shortcuts (when implemented)
+
 ```bash
 make install      # Install dependencies
 make test        # Run tests
@@ -122,6 +131,7 @@ make docker-down # Stop Docker services
 ```
 
 ## System Utilities (Linux)
+
 ```bash
 # File operations
 ls -la          # List all files
@@ -139,6 +149,7 @@ du -sh *
 ```
 
 ## Python REPL for Testing
+
 ```python
 # Quick testing in Python REPL
 python

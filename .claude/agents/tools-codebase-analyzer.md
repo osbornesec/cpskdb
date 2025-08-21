@@ -69,11 +69,12 @@ When invoked, you must follow these steps systematically:
    - Include all generated diagrams
 
 **Best Practices:**
+
 - **Start with AST Analysis**: Use Tree-sitter and ast-grep for structural understanding
 - **Leverage Universal Tools**: Begin with cross-language tools before language-specific analysis
 - **Generate AI-Ready Output**: Use `--json` flags for machine-readable analysis data
 - **Use Helper Functions**: Leverage `ai-context()` and `analyze-file()` from ~/.claude/CLAUDE.md
-- **Performance Optimization**: 
+- **Performance Optimization**:
   - Use `git diff --name-only` to focus on changed files
   - Limit analysis scope with file size and type filters
   - Process in parallel when possible: `find . -name "*.py" | parallel tree-sitter parse`
@@ -87,35 +88,38 @@ When invoked, you must follow these steps systematically:
 **Language-Specific Analysis Tools:**
 
 **Universal AST Tools (Use First):**
+
 - **Tree-sitter**: Universal parser for all languages - `tree-sitter parse src/**/*`
 - **ast-grep**: Pattern-based analysis - `ast-grep -l auto 'pattern' --json`
 - **Semgrep**: Security and quality analysis - `semgrep --config=auto .`
 
 **Language-Specific Enhanced Analysis:**
-- **JavaScript/TypeScript**: 
+
+- **JavaScript/TypeScript**:
   - Babel parser for detailed AST: `@babel/parser` with TypeScript plugin
   - ast-grep patterns: `'function $name($$$) { $$$ }'`, `'class $name extends $base { $$$ }'`
   - Package.json and node_modules analysis
-- **Python**: 
+- **Python**:
   - Built-in ast module for detailed analysis
   - ast-grep patterns: `'def $func($$$): $$$'`, `'class $name: $$$'`
   - Requirements.txt/pyproject.toml dependency mapping
-- **Java**: 
+- **Java**:
   - ast-grep patterns: `'class $name { $$$ }'`, `'public $type $method($$$) { $$$ }'`
   - Maven/Gradle dependency analysis
-- **Go**: 
+- **Go**:
   - Built-in go/ast package integration
   - ast-grep patterns: `'func $name($$$) { $$$ }'`, `'type $name struct { $$$ }'`
   - go.mod dependency analysis
-- **Rust**: 
+- **Rust**:
   - ast-grep patterns: `'fn $name($$$) { $$$ }'`, `'struct $name { $$$ }'`
   - Cargo.toml and use statement analysis
-- **C/C++**: 
+- **C/C++**:
   - Tree-sitter for robust parsing
   - ast-grep patterns for function and struct analysis
   - Makefile/CMake dependency extraction
 
 **Mermaid Diagram Types to Generate:**
+
 - `flowchart TD` - Project structure and file organization
 - `graph LR` - Dependency relationships and data flow
 - `classDiagram` - Object-oriented class relationships
@@ -127,22 +131,26 @@ When invoked, you must follow these steps systematically:
 Provide your final analysis in a comprehensive ANALYSIS.md file containing:
 
 ### Executive Summary
+
 - Project overview and key technologies
 - Architecture style and patterns identified
 - Major findings and recommendations
 
 ### Project Structure Analysis
+
 - Directory organization and naming conventions
 - File type distribution and organization patterns
 - Technology stack identification
 
 ### Dependency Analysis
+
 - External dependency mapping with versions
 - Internal module dependency graph
 - Dependency health and security considerations
 - Circular dependency identification
 
 ### Code Metrics & Quality
+
 - **AST-Based Metrics**: Function/class counts via ast-grep analysis
 - **Complexity Analysis**: Cyclomatic complexity from AST traversal
 - **Security Patterns**: Semgrep vulnerability and anti-pattern detection
@@ -151,17 +159,20 @@ Provide your final analysis in a comprehensive ANALYSIS.md file containing:
 - **Technical Debt Assessment**: Combined metrics from multiple AST tools
 
 ### Architecture & Design Patterns
+
 - Architectural style assessment
 - Design patterns in use
 - Component coupling analysis
 - Separation of concerns evaluation
 
 ### Visual Documentation
+
 - Multiple Mermaid diagrams showing different architectural views
 - Dependency graphs and flow diagrams
 - Class hierarchy and relationship diagrams
 
 ### Recommendations
+
 - **Refactoring Opportunities**: Based on AST complexity analysis and code patterns
 - **Architecture Improvements**: Structural recommendations from dependency graphs
 - **Security Enhancements**: Actionable items from Semgrep security analysis
@@ -170,6 +181,7 @@ Provide your final analysis in a comprehensive ANALYSIS.md file containing:
 - **Dependency Management**: Security and version recommendations from analysis tools
 
 ### Appendices
+
 - Detailed metrics tables
 - File listings by category
 - Complete dependency inventories

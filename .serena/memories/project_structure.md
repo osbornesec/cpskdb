@@ -1,10 +1,13 @@
 # Project Structure
 
 ## Current Status
-The project is in initial setup phase. Only the CLAUDE.md configuration file exists currently.
+
+The project is in initial setup phase. Only the CLAUDE.md configuration file
+exists currently.
 
 ## Planned Directory Structure
-```
+
+```text
 cpskdb/
 ├── python/
 │   ├── src/
@@ -86,6 +89,7 @@ cpskdb/
 ```
 
 ## Key Design Principles
+
 1. **Separation of Concerns**: Clear boundaries between layers
 2. **Dependency Injection**: Use FastAPI's DI system
 3. **Async-First**: Leverage async/await for I/O operations
@@ -95,6 +99,7 @@ cpskdb/
 7. **Logging**: Structured logging throughout the application
 
 ## Module Responsibilities
+
 - **api/**: HTTP layer, request/response handling
 - **agents/**: Business logic for agent orchestration
 - **ingestion/**: Document processing pipeline

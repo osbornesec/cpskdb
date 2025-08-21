@@ -1,11 +1,15 @@
 # Agentic RAG System - Project Documentation
 
 ## Project Overview
-Building a locally hosted, agentic Retrieval-Augmented Generation (RAG) system for multi-product technical data with high accuracy, auditability, and data privacy.
+
+Building a locally hosted, agentic Retrieval-Augmented Generation (RAG)
+system for multi-product technical data with high accuracy, auditability,
+and data privacy.
 
 ## Architecture
 
 ### System Design
+
 The system implements an agentic RAG architecture with the following data flow:
 
 1. **Document Ingestion**: Parse, chunk, and embed documents into vector storage
@@ -15,6 +19,7 @@ The system implements an agentic RAG architecture with the following data flow:
 5. **Audit & Feedback**: Track citations and collect user feedback
 
 ### Multi-Agent Framework
+
 Built on LangGraph for orchestrated agent workflows:
 
 - **Supervisor Agent**: Intent classification and routing logic
@@ -24,7 +29,9 @@ Built on LangGraph for orchestrated agent workflows:
 - **Validation Agent**: Quality assurance and guardrails
 
 ### Technology Stack
+
 **Core Infrastructure:**
+
 - FastAPI: REST API with async support
 - Qdrant: Vector database for embeddings
 - PostgreSQL: Metadata, logs, and relationships
@@ -32,6 +39,7 @@ Built on LangGraph for orchestrated agent workflows:
 - Ollama: Local LLM (GPT-OSS-20B)
 
 **AI/ML Components:**
+
 - LangGraph: Agent orchestration framework
 - Voyage AI: Production embedding service
 - Cohere: Reranking for improved relevance
@@ -44,7 +52,6 @@ Documents → Parse → Chunk → Embed → Qdrant
     ↓
 Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
 ```
-
 
 ## Directory Structure
 
@@ -98,8 +105,8 @@ Query → Intent → Route → Retrieve → Rerank → Generate → Validate →
     └── deployment/    # Deployment guides
 ```
 
-
 **Key Directory Purposes:**
+
 - **src/**: Contains all application source code, organized by functional area
 - **tests/**: Comprehensive test suite with unit, integration, and e2e tests
 - **docker/**: Containerization configs for development and production
@@ -110,9 +117,11 @@ Query → Intent → Route → Retrieve → Rerank → Generate → Validate →
 ## Configuration Management
 
 ### Environment Variables
+
 Core configuration through environment files:
 
 **Required Variables:**
+
 ```bash
 # Database Configuration
 POSTGRES_URL=postgresql://<user>:<password>@localhost:5432/cpskdb
@@ -133,6 +142,7 @@ CORS_ORIGINS=http://localhost:3000
 ```
 
 **Optional Variables:**
+
 ```bash
 # Performance Tuning
 EMBEDDING_BATCH_SIZE=128
@@ -146,37 +156,44 @@ ENABLE_METRICS=true
 ```
 
 ### Configuration Structure
+
 **Pydantic Settings Classes:**
+
 - `DatabaseSettings`: Connection configs and pool settings
 - `EmbeddingSettings`: Provider configs and rate limits
 - `AgentSettings`: LLM parameters and workflow configs
 - `APISettings`: Server configs and middleware settings
 
 ### Development Environment
+
 Docker Compose setup for local development:
 
 **Services:**
+
 - **Qdrant** (port 6333): Vector database with persistence
 - **PostgreSQL** (port 5432): Metadata and audit logs
 - **Redis** (port 6379): Caching and session storage
 - **Ollama** (port 11434): Local LLM inference
 
 **Setup Commands:**
+
 ```bash
-# Start all services
-docker compose up -d
+# Start all services (available after Task 99 adds docker-compose)
+# docker compose up -d
 
-# Initialize database
-python scripts/init_db.py
+# Initialize database (available after Tasks 95/97 add init script)
+# python scripts/init_db.py
 
-# Run application
-uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+# Run application (available after Task 95 adds API entrypoint)
+# uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## API Documentation
+
 RESTful API with OpenAPI documentation available at `/docs`:
 
 **Core Endpoints:**
+
 - `POST /api/v1/query` - Submit queries to the RAG system
 - `GET /api/v1/query/{query_id}` - Retrieve query results and status
 - `POST /api/v1/query/batch` - Batch query processing
@@ -184,34 +201,41 @@ RESTful API with OpenAPI documentation available at `/docs`:
 - `POST /api/v1/feedback` - Submit feedback on responses
 
 **Ingestion Endpoints:**
+
 - `POST /api/v1/ingest/document` - Single document upload
 - `POST /api/v1/ingest/batch` - Batch document processing
 - `GET /api/v1/ingest/status/{job_id}` - Check ingestion status
 
 **System Endpoints:**
+
 - `GET /health` - Basic health check
 - `GET /health/ready` - Readiness probe for K8s
 - `GET /health/metrics` - Prometheus metrics
 
 ## Testing Strategy
+
 Comprehensive test coverage across all system layers:
 
 **Unit Tests (`tests/unit/`):**
+
 - Component-level testing for individual modules
 - Mock external dependencies (APIs, databases)
 - Fast execution for TDD workflow
 
 **Integration Tests (`tests/integration/`):**
+
 - Service interaction testing
 - Database integration with test containers
 - API endpoint testing with test clients
 
 **End-to-End Tests (`tests/e2e/`):**
+
 - Complete workflow validation
 - Real service dependencies
 - Performance and load testing
 
 **Test Commands:**
+
 ```bash
 # Run all tests
 pytest tests/
@@ -223,65 +247,105 @@ pytest tests/e2e/
 
 # Run with coverage
 pytest --cov=src tests/
+
+# Markdown linting
+npx markdownlint-cli2 "**/*.md"
 ```
+
+**Documentation Quality:**
+
+- Use `npx markdownlint-cli2` to validate Markdown formatting
+- Enforces consistent documentation standards
+- Checks heading hierarchy, list formatting, and code block syntax
+- Run before committing documentation changes
 
 ## Claude Code Integration
 
 ### MCP Server Configuration
+
 This project leverages Serena MCP for semantic code operations:
 
 **Primary Tools:**
+
 - `mcp__serena__find_symbol` - Locate code symbols
 - `mcp__serena__replace_symbol_body` - Edit functions/classes
 - `mcp__serena__search_for_pattern` - Pattern-based search
 - `mcp__serena__get_symbols_overview` - File structure analysis
 
 **Memory Management:**
+
 - Project knowledge stored in `.claude/memories/`
 - Architecture patterns documented for reuse
 - Task completion tracking with persistent state
 
 ### Subagent Integration
+
 **@agent-context7-docs-searcher** for documentation research:
+
 - FastAPI best practices and patterns
 - LangGraph agent development
 - Vector database optimization
 - ML/AI system architecture
 
 **Development Workflow:**
+
 1. Use @agent-context7-docs-searcher for research
 2. Apply Serena MCP for code implementation
 3. Follow TDD with comprehensive test coverage
 4. Document patterns in project memories
 
-# CRITICAL: CODE OPERATIONS RULE
-  For ALL code search and editing operations:
-  1. Use Serena MCP tools (find_symbol, replace_symbol_body, etc.) as PRIMARY method
-  2. Use @agent-context7-docs-searcher for all documentation research
-  3. Traditional tools (grep, sed) are FALLBACK ONLY
-  4. This applies to ALL agents and subagents
+## CRITICAL: CODE OPERATIONS RULE
+
+For ALL code search and editing operations:
+
+1. Use Serena MCP tools (find_symbol, replace_symbol_body, etc.) as
+
+   PRIMARY method
+
+2. Use @agent-context7-docs-searcher for all documentation research
+3. Traditional tools (grep, sed) are FALLBACK ONLY
+4. This applies to ALL agents and subagents
 
 ## IMPORTANT: Documentation Research Before Coding
-  **ALWAYS use @agent-context7-docs-searcher BEFORE writing any code:**
-  - Invoke this subagent to research language, library, and framework usage
-  - Provides best practices, patterns, and implementation guidance
-  - Ensures code follows current standards and avoids antipatterns
-  - Example: `@agent-context7-docs-searcher "Research React hooks best practices for data fetching"`
+
+**ALWAYS use @agent-context7-docs-searcher BEFORE writing any code:**
+
+- Invoke this subagent to research language, library, and framework usage
+- Provides best practices, patterns, and implementation guidance
+- Ensures code follows current standards and avoids antipatterns
+- Example: `@agent-context7-docs-searcher "Research React hooks best
+
+  practices for data fetching"`
 
 ## Serena MCP Server - Semantic Code Intelligence
 
 ### Overview
-Serena MCP is a semantic code analysis and manipulation server that provides intelligent, symbol-aware operations for codebases. It should be used as the PRIMARY method for ALL code operations, with traditional tools (grep, sed, etc.) only as fallbacks.
+
+Serena MCP is a semantic code analysis and manipulation server that provides
+intelligent, symbol-aware operations for codebases. It should be used as the
+PRIMARY method for ALL code operations, with traditional tools (grep, sed,
+etc.) only as fallbacks.
 
 ### Core Capabilities
 
 #### Search Code (ALWAYS use these first)
-- **Find symbols**: `mcp__serena__find_symbol(name_path="ClassName", include_body=true)`
+
+- **Find symbols**: `mcp__serena__find_symbol(name_path="ClassName",
+
+  include_body=true)`
+
   - Searches for code entities by name path pattern
-  - Supports depth parameter to retrieve children (e.g., methods of a class)
+  - Supports depth parameter to retrieve children (e.g., methods of a
+
+    class)
+
   - Can include/exclude specific symbol kinds (classes, functions, variables, etc.)
   
-- **Find references**: `mcp__serena__find_referencing_symbols(name_path="methodName", relative_path="file.py")`
+- **Find references**:
+
+  `mcp__serena__find_referencing_symbols(name_path="methodName",
+  relative_path="file.py")`
+
   - Finds all references to a specific symbol
   - Returns metadata and code snippets around references
   
@@ -296,25 +360,43 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
   - Essential first step when exploring new files
 
 #### File Operations
-- **List directory**: `mcp__serena__list_dir(relative_path=".", recursive=true)`
+
+- **List directory**: `mcp__serena__list_dir(relative_path=".",
+
+  recursive=true)`
+
   - Lists non-gitignored files and directories
   
 - **Find files**: `mcp__serena__find_file(file_mask="*.py", relative_path=".")`
   - Finds files matching patterns using wildcards
 
 #### Edit Code (PREFER symbol-based operations)
-- **Replace symbol body**: `mcp__serena__replace_symbol_body(name_path="functionName", relative_path="file.py", body="new code")`
+
+- **Replace symbol body**: `mcp__serena__replace_symbol_body(
+
+  name_path="functionName", relative_path="file.py", body="new code")
+
   - Replaces entire function/class/method body
   - Preserves indentation and context
   
-- **Insert before symbol**: `mcp__serena__insert_before_symbol(name_path="className", body="imports")`
+- **Insert before symbol**: `mcp__serena__insert_before_symbol(
+
+  name_path="className", body="imports")
+
   - Ideal for adding imports or new top-level definitions
   
-- **Insert after symbol**: `mcp__serena__insert_after_symbol(name_path="methodName", body="new method")`
+- **Insert after symbol**: `mcp__serena__insert_after_symbol(
+
+  name_path="methodName", body="new method")
+
   - Adds new methods, functions, or classes after existing ones
 
 #### Memory Management
-- **Write memory**: `mcp__serena__write_memory(memory_name="architecture_overview", content="...")`
+
+- **Write memory**: `mcp__serena__write_memory(
+
+  memory_name="architecture_overview", content="...")
+
   - Store important project information for future reference
   
 - **Read memory**: `mcp__serena__read_memory(memory_file_name="architecture_overview.md")`
@@ -324,6 +406,7 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
   - View all available memory files
 
 #### Project Management
+
 - **Check onboarding**: `mcp__serena__check_onboarding_performed()`
   - Verify if project onboarding is complete
   
@@ -331,7 +414,11 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
   - Initialize project understanding
 
 #### Thinking Tools (Use strategically)
-- **Think about collected information**: `mcp__serena__think_about_collected_information()`
+
+- **Think about collected information**:
+
+  `mcp__serena__think_about_collected_information()`
+
   - Call after completing search sequences
   
 - **Think about task adherence**: `mcp__serena__think_about_task_adherence()`
@@ -366,12 +453,14 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ### Documentation Research
 
 **Use @agent-context7-docs-searcher for all documentation needs:**
+
 - Technical guidance and best practices
 - Library and framework usage
 - Implementation patterns
 - API documentation
 
 **Usage Guidelines:**
+
 - Always use the agent before implementing from scratch
 - Adapt discovered patterns to project-specific requirements
 - Use for both complex features and simple API usage
@@ -384,6 +473,7 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 **Research checklist:**
 
 - [ ] Use @agent-context7-docs-searcher to research implementation approach
+
 - [ ] Research best practices for relevant technologies
 - [ ] Understand security implications
 - [ ] Check for common pitfalls or antipatterns
@@ -391,27 +481,48 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ### Using @agent-context7-docs-searcher
 
 **When to use:**
+
 - Before implementing any new feature or functionality
 - When working with unfamiliar libraries or frameworks
 - To find the most current best practices
 - To research proper API usage and patterns
 
 **How to invoke:**
+
 ```bash
 @agent-context7-docs-searcher "Research [specific topic/library/pattern]"
 ```
 
 **Example invocations:**
-- `@agent-context7-docs-searcher "Research TypeScript generics and type constraints"`
-- `@agent-context7-docs-searcher "Find best practices for React state management"`
-- `@agent-context7-docs-searcher "Research Node.js async error handling patterns"`
-- `@agent-context7-docs-searcher "Find PostgreSQL connection pooling implementation"`
+
+- `@agent-context7-docs-searcher "Research TypeScript generics and type
+
+  constraints"`
+
+- `@agent-context7-docs-searcher "Find best practices for React state
+
+  management"`
+
+- `@agent-context7-docs-searcher "Research Node.js async error
+
+  handling patterns"`
+
+- `@agent-context7-docs-searcher "Find PostgreSQL connection pooling
+
+  implementation"`
 
 ### Knowledge Source Prioritization
 
 **Query Strategy:**
-- Start with broad architectural queries, narrow to specific implementation
-- Use @agent-context7-docs-searcher for both strategic decisions and tactical "how-to" questions
+
+- Start with broad architectural queries, narrow to specific
+
+  implementation
+
+- Use @agent-context7-docs-searcher for both strategic decisions and
+
+  tactical "how-to" questions
+
 - Request cross-referencing of multiple documentation sources for validation
 - Use focused topic queries for targeted results
 
@@ -420,6 +531,7 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ### Code Operations Standards
 
 **Use Serena MCP for ALL code operations:**
+
 - [ ] All code searches performed with Serena MCP tools
 - [ ] All code edits made with Serena symbol operations
 - [ ] Traditional tools (grep, sed, awk) used ONLY as fallback
@@ -428,6 +540,7 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ### Research Validation
 
 **Always validate research findings:**
+
 - Cross-reference multiple sources
 - Verify recency of information
 - Test applicability to current project context
@@ -436,15 +549,19 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ## Git and GitHub Best Practices
 
 ### Repository Information
-- **Repository URL**: https://github.com/osbornesec/cpskdb
-- **Owner**: Michael Osborne (michael@allthingsai.life)
-- **Project**: Agentic RAG System - Locally hosted, multi-product technical data retrieval system
+
+- **Repository URL**: <https://github.com/osbornesec/cpskdb>
+- **Owner**: Michael Osborne (<michael@allthingsai.life>)
+- **Project**: Agentic RAG System - Locally hosted, multi-product
+
+  technical data retrieval system
 
 ### Git Configuration
+
 - **User**: Michael Osborne
-- **Email**: michael@allthingsai.life
+- **Email**: <michael@allthingsai.life>
 - **Default Branch**: main
-- **Remote Origin**: https://github.com/osbornesec/cpskdb.git
+- **Remote Origin**: <https://github.com/osbornesec/cpskdb.git>
 
 ### Commit Standards
 
@@ -455,12 +572,11 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 
 <body>
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+# Optional: note tooling used (e.g., "Generated with AI-assisted editor")
 ```
 
 **Commit Types:**
+
 - `feat`: New feature implementation
 - `fix`: Bug fixes
 - `docs`: Documentation updates
@@ -471,6 +587,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - `style`: Code formatting, style changes
 
 **Example Commit Messages:**
+
 - `feat: implement Qdrant vector database client with batch processing`
 - `fix: resolve memory leak in embedding cache service`
 - `docs: add API documentation for query endpoints`
@@ -479,12 +596,17 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Branch Management
 
 **Branch Naming Convention:**
-- `feature/task-XX-description` - New features (e.g., `feature/task-95-fastapi-structure`)
+
+- `feature/task-XX-description` - New features
+
+  (e.g., `feature/task-95-fastapi-structure`)
+
 - `fix/issue-description` - Bug fixes (e.g., `fix/memory-leak-embeddings`)
 - `docs/description` - Documentation updates (e.g., `docs/api-reference`)
 - `refactor/description` - Code refactoring (e.g., `refactor/chunking-pipeline`)
 
 **Workflow:**
+
 1. Create feature branch from `main`
 2. Implement changes with TDD approach
 3. Commit frequently with descriptive messages
@@ -494,9 +616,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Pull Request Standards
 
 **PR Title Format:**
+
 `[Task XX] Description of changes`
 
 **PR Description Template:**
+
 ```markdown
 ## Summary
 - Brief description of changes
@@ -524,6 +648,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Git Security Best Practices
 
 **Never Commit:**
+
 - API keys, tokens, or credentials
 - Environment files (.env) with secrets
 - Large model files or datasets
@@ -531,6 +656,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Database dumps or backups
 
 **Pre-commit Checks:**
+
 - Verify .gitignore patterns are working
 - Run `git status` to review staged files
 - Check for secrets with `git diff --cached`
@@ -539,6 +665,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### File Management
 
 **Always Ignore:**
+
 - Python bytecode (`__pycache__/`, `*.pyc`)
 - Virtual environments (`.venv/`, `venv/`)
 - IDE configuration files (`.vscode/`, `.idea/`)
@@ -548,6 +675,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Database files (`*.db`, `dump.rdb`, `qdrant_data/`)
 
 **Track in Git:**
+
 - Source code and configuration templates
 - Documentation and README files
 - Test files and test data (small samples only)
@@ -557,6 +685,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Collaboration Guidelines
 
 **Code Review Requirements:**
+
 - All changes must go through Pull Requests
 - At least one reviewer approval required
 - Automated tests must pass
@@ -564,6 +693,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Documentation must be updated
 
 **Issue Management:**
+
 - Link commits to issues/tasks when applicable
 - Use issue templates for consistency
 - Label issues appropriately (bug, enhancement, documentation)
@@ -572,19 +702,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Backup and Recovery
 
 **Repository Backup:**
+
 - Primary: GitHub remote repository
 - Local: Multiple clones on different machines
 - Archive: Periodic downloads of repository state
 
 **Recovery Procedures:**
+
 - Lost work: Check `git reflog` for recent commits
 - Corrupted repository: Clone fresh from GitHub
 - Accidental commits: Use `git revert` instead of `git reset`
-- Secret exposure: Rotate credentials immediately, use `git filter-branch` if needed
+- Secret exposure: Rotate credentials immediately, use
+
+  `git filter-branch` if needed
 
 ### Integration with Development Workflow
 
 **Daily Git Operations:**
+
 ```bash
 # Start of day
 git pull origin main
@@ -601,11 +736,13 @@ git push origin feature-branch
 ```
 
 **Emergency Procedures:**
+
 - **Exposed Secret**: Immediately rotate credentials, remove from history
 - **Broken main**: Revert problematic commit, investigate cause
 - **Merge Conflicts**: Resolve locally, test thoroughly before pushing
 
-# important-instruction-reminders
+## Important Instruction Reminders
+
 Do what has been asked; nothing more, nothing less.
 ALWAYS use @agent-context7-docs-searcher BEFORE writing any code.
 ALWAYS use Serena MCP for code operations, traditional tools as fallback only.

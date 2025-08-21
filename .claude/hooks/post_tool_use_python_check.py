@@ -3,8 +3,9 @@
 # requires-python = ">=3.11"
 # ///
 """
-PostToolUse Hook for Python Quality Checks
-Runs ruff and mypy after file modifications
+PostToolUse Hook for Python and Markdown Quality Checks
+Runs ruff and mypy after Python file modifications
+Runs markdownlint-cli2 after Markdown file modifications
 """
 
 import json
@@ -48,9 +49,11 @@ def get_modified_files(tool_name, tool_input):
         if relative_path:
             files.append(relative_path)
     
-    # Filter for Python files
+    # Separate Python and Markdown files
     python_files = [f for f in files if f.endswith('.py')]
-    return python_files
+    markdown_files = [f for f in files if f.endswith('.md')]
+    
+    return python_files, markdown_files
 
 def run_ruff(file_path):
     """Run ruff linter and formatter on a Python file."""
@@ -114,6 +117,29 @@ def run_mypy(file_path):
     
     return errors
 
+def run_markdownlint(file_path):
+    """Run markdownlint-cli2 on a Markdown file."""
+    errors = []
+    
+    try:
+        result = subprocess.run(
+            ['npx', 'markdownlint-cli2', file_path],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode != 0:
+            error_output = result.stderr if result.stderr.strip() else result.stdout
+            errors.append(f"Markdownlint issues:\n{error_output}")
+    except subprocess.TimeoutExpired:
+        errors.append(f"Markdownlint timed out for {file_path}")
+    except FileNotFoundError:
+        errors.append("npx not found. Install Node.js and npm/npx")
+    except Exception as e:
+        errors.append(f"Markdownlint error: {e}")
+    
+    return errors
+
 def main():
     try:
         input_data = json.loads(sys.stdin.read())
@@ -135,16 +161,17 @@ def main():
         # Operation failed, no need to run checks
         sys.exit(0)
     
-    # Get modified Python files
-    python_files = get_modified_files(tool_name, tool_input)
+    # Get modified Python and Markdown files
+    python_files, markdown_files = get_modified_files(tool_name, tool_input)
     
-    if not python_files:
-        # No Python files modified, exit normally
+    if not python_files and not markdown_files:
+        # No Python or Markdown files modified, exit normally
         sys.exit(0)
     
-    # Run checks on each modified Python file
+    # Run checks on modified files
     all_errors = []
     
+    # Check Python files
     for file_path in python_files:
         # Check if file exists
         if not Path(file_path).exists():
@@ -162,10 +189,22 @@ def main():
             all_errors.append(f"\n=== Mypy issues in {file_path} ===")
             all_errors.extend(mypy_errors)
     
+    # Check Markdown files
+    for file_path in markdown_files:
+        # Check if file exists
+        if not Path(file_path).exists():
+            continue
+        
+        # Run markdownlint checks
+        markdown_errors = run_markdownlint(file_path)
+        if markdown_errors:
+            all_errors.append(f"\n=== Markdownlint issues in {file_path} ===")
+            all_errors.extend(markdown_errors)
+    
     # If there are any errors, report them to Claude
     if all_errors:
         error_message = "\n".join(all_errors)
-        print(f"Python quality check failures detected:\n{error_message}", file=sys.stderr)
+        print(f"Quality check failures detected:\n{error_message}", file=sys.stderr)
         # Exit code 2 will feed the errors back to Claude
         sys.exit(2)
     

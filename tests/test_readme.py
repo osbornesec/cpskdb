@@ -91,9 +91,9 @@ class TestREADMEContent:
         # Should contain basic installation commands
         install_indicators = [
             r"git clone",
-            r"pip install",
+            r"(?:pip|pipx|uv)\s+install",
+            r"(?:poetry\s+install|pip\s+install\s+-r\s+requirements\.txt|pip\s+install\s+\.)",
             r"docker.*compose",
-            r"requirements\.txt"
         ]
         
         install_found = False
@@ -112,19 +112,21 @@ class TestREADMEFormatting:
         """Test that code blocks specify language for syntax highlighting."""
         content = readme_content
         
-        # Find opening code blocks (ones followed by content)
-        lines = content.split('\n')
-        opening_blocks = []
-        
+        # Parse fences with a state machine to avoid misclassifying closing fences
+        lines = content.split("\n")
+        opening_blocks: list[tuple[int, str, str]] = []
+        in_block = False
         for i, line in enumerate(lines):
-            if line.startswith('```'):
-                # Check if this is an opening block (has content after it) or closing block
-                if i + 1 < len(lines) and lines[i + 1].strip():  # Next line has content
-                    # This is likely an opening block
-                    lang_match = re.match(r'```([A-Za-z0-9_+-]*)', line)
-                    if lang_match:
-                        lang = lang_match.group(1)
-                        opening_blocks.append((i + 1, line, lang))
+            if line.startswith("```"):
+                if not in_block:
+                    # Opening fence
+                    lang_match = re.match(r"```([A-Za-z0-9_+-]*)[ \t]*$", line)
+                    lang = lang_match.group(1) if lang_match else ""
+                    opening_blocks.append((i + 1, line, lang))
+                    in_block = True
+                else:
+                    # Closing fence
+                    in_block = False
         
         # Should have code blocks with language specification
         assert len(opening_blocks) > 0, "README should contain code blocks with examples"
