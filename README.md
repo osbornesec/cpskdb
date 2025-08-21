@@ -35,11 +35,13 @@ Built on LangGraph for orchestrated agent workflows:
 - **Validation Agent**: Quality assurance and guardrails
 
 ### Data Flow
-```
+
+```text
 Documents → Parse → Chunk → Embed → Qdrant
     ↓
 Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
 ```
+
 
 ## 📦 Installation
 
@@ -55,7 +57,7 @@ git clone https://github.com/osbornesec/cpskdb.git
 cd cpskdb
 
 # Start infrastructure services
-docker-compose up -d
+docker compose up -d
 
 # Create virtual environment
 python -m venv .venv
@@ -144,7 +146,8 @@ pytest --cov=src tests/
 ```
 
 ### Project Structure
-```
+
+```text
 src/
 ├── api/              # FastAPI routes and middleware
 ├── agents/           # LangGraph agent implementations
@@ -153,6 +156,7 @@ src/
 ├── retrieval/        # Vector search and ranking
 └── models/           # Pydantic schemas
 ```
+
 
 ## 🤝 Contributing
 

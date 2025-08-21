@@ -6,6 +6,7 @@ Building a locally hosted, agentic Retrieval-Augmented Generation (RAG) system f
 ## Phase 0: Foundations (Tasks 100-90)
 
 ### Project Setup
+
 - [Completed] **Task 100:** Create project directory structure and initialize Git repository
   - [Completed] Create src/ directory structure (api/, agents/, ingestion/, embeddings/, retrieval/, models/)
   - [Completed] Create tests/, docker/, config/, scripts/, docs/ directories
@@ -280,11 +281,13 @@ Building a locally hosted, agentic Retrieval-Augmented Generation (RAG) system f
 ## Progress Tracking
 
 ### Phase Completion
+
 - [ ] Phase 0: Foundations (11 tasks) - 9% complete (1/11)
 - [ ] Phase 1: Multi-Product & Quality (11 tasks) - 0% complete
 - [ ] Phase 2: Scale & Hardening (6 tasks) - 0% complete
 
 ### Overall Progress
+
 - **Total Tasks:** 28
 - **Completed:** 1
 - **In Progress:** 0

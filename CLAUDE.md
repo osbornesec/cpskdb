@@ -38,14 +38,17 @@ Built on LangGraph for orchestrated agent workflows:
 - Custom chunking: Semantic and structural strategies
 
 **Data Flow:**
-```
+
+```text
 Documents → Parse → Chunk → Embed → Qdrant
     ↓
 Query → Intent → Route → Retrieve → Rerank → Generate → Validate → Response
 ```
 
+
 ## Directory Structure
-```
+
+```text
 .
 ├── src/                 # Main application source code
 │   ├── api/            # FastAPI routes and endpoints
@@ -71,7 +74,7 @@ Query → Intent → Route → Retrieve → Rerank → Generate → Validate →
 │   │   └── search.py   # Search orchestration
 │   └── models/         # Pydantic models and schemas
 │       ├── requests.py # API request models
-│       ├── responses.py# API response models
+│       ├── responses.py # API response models
 │       └── database.py # Database models
 ├── tests/              # Test suite
 │   ├── unit/          # Unit tests for individual modules
@@ -94,6 +97,7 @@ Query → Intent → Route → Retrieve → Rerank → Generate → Validate →
     ├── architecture/  # System design documents
     └── deployment/    # Deployment guides
 ```
+
 
 **Key Directory Purposes:**
 - **src/**: Contains all application source code, organized by functional area
@@ -160,7 +164,7 @@ Docker Compose setup for local development:
 **Setup Commands:**
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Initialize database
 python scripts/init_db.py
@@ -445,7 +449,8 @@ Serena MCP is a semantic code analysis and manipulation server that provides int
 ### Commit Standards
 
 **Commit Message Format:**
-```
+
+```text
 <type>: <subject>
 
 <body>
