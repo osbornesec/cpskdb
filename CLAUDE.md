@@ -741,6 +741,20 @@ git push origin feature-branch
 - **Broken main**: Revert problematic commit, investigate cause
 - **Merge Conflicts**: Resolve locally, test thoroughly before pushing
 
+## Code Quality Standards
+
+### CRITICAL: Immediate Code Quality Fixes Required
+
+All formatting, linting, type checking, and LanguageTool issues MUST be
+immediately fixed when detected. This includes:
+
+- **Ruff formatting issues**: Run `ruff format` immediately when detected
+- **Ruff linting issues**: Fix import errors, unused variables, and code style violations
+- **Mypy type checking issues**: Address type annotations and import stubs
+- **LanguageTool issues**: While less critical, fix when practical
+
+These fixes should be applied immediately upon detection, not deferred to later steps.
+
 ## Important Instruction Reminders
 
 Do what has been asked; nothing more, nothing less.
