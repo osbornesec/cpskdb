@@ -19,7 +19,7 @@ Built on LangGraph for orchestrated agent workflows:
 
 - **Supervisor Agent**: Intent classification and routing logic
 - **Product Specialist Agents**: Domain-specific knowledge retrieval
-- **Cross-Reference Agent**: Inter-product comparisons and correlations  
+- **Cross-Reference Agent**: Inter-product comparisons and correlations
 - **Synthesis Agent**: Context aggregation and response generation
 - **Validation Agent**: Quality assurance and guardrails
 

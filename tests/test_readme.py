@@ -4,23 +4,25 @@ import re
 from pathlib import Path
 import pytest
 
+@pytest.fixture(scope="module")
+def readme_content() -> str:
+    """Load README.md once for all tests; skip suite if absent."""
+    readme_path = Path(__file__).parent.parent / "README.md"
+    if not readme_path.exists():
+        pytest.skip("README.md not present; skipping README validation suite")
+    return readme_path.read_text(encoding="utf-8")
+
 
 class TestREADMEStructure:
     """Test README.md file structure and content."""
     
-    def test_readme_file_exists(self) -> None:
+    def test_readme_file_exists(self, readme_content: str) -> None:
         """Test that README.md file exists in project root."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        assert readme_path.exists(), "README.md file must exist in project root"
+        assert readme_content is not None
     
-    def test_readme_has_essential_sections(self) -> None:
+    def test_readme_has_essential_sections(self, readme_content: str) -> None:
         """Test that README contains all required sections."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping section checks")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        content = readme_content
         
         # Define required sections
         required_sections = [
@@ -44,14 +46,9 @@ class TestREADMEStructure:
 class TestREADMEContent:
     """Test README.md content quality and accuracy."""
     
-    def test_project_description_exists(self) -> None:
+    def test_project_description_exists(self, readme_content: str) -> None:
         """Test that project has clear description."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping description check")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        content = readme_content
         
         # Should mention key concepts
         key_concepts = [
@@ -69,14 +66,9 @@ class TestREADMEContent:
         
         assert description_found, "README must contain clear project description with key concepts"
     
-    def test_technology_stack_documented(self) -> None:
+    def test_technology_stack_documented(self, readme_content: str) -> None:
         """Test that technology stack is properly documented."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping tech stack check")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        content = readme_content
         
         # Required technologies from CLAUDE.md
         required_tech = [
@@ -92,14 +84,9 @@ class TestREADMEContent:
             assert re.search(tech, content, re.IGNORECASE), \
                 f"Technology {tech} must be mentioned in README"
     
-    def test_installation_instructions_exist(self) -> None:
+    def test_installation_instructions_exist(self, readme_content: str) -> None:
         """Test that installation section has actual instructions."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping installation checks")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        content = readme_content
         
         # Should contain basic installation commands
         install_indicators = [
@@ -121,34 +108,34 @@ class TestREADMEContent:
 class TestREADMEFormatting:
     """Test README.md Markdown formatting and syntax."""
     
-    def test_code_blocks_have_language_specification(self) -> None:
+    def test_code_blocks_have_language_specification(self, readme_content: str) -> None:
         """Test that code blocks specify language for syntax highlighting."""
-        readme_path = Path(__file__).parent.parent / "README.md"
+        content = readme_content
         
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping code block checks")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        # Find opening code blocks (ones followed by content)
+        lines = content.split('\n')
+        opening_blocks = []
         
-        # Find all code blocks
-        code_block_pattern = r'```([A-Za-z0-9_+-]*)[ \t]*\n'
-        matches = re.findall(code_block_pattern, content)
+        for i, line in enumerate(lines):
+            if line.startswith('```'):
+                # Check if this is an opening block (has content after it) or closing block
+                if i + 1 < len(lines) and lines[i + 1].strip():  # Next line has content
+                    # This is likely an opening block
+                    lang_match = re.match(r'```([A-Za-z0-9_+-]*)', line)
+                    if lang_match:
+                        lang = lang_match.group(1)
+                        opening_blocks.append((i + 1, line, lang))
         
         # Should have code blocks with language specification
-        assert len(matches) > 0, "README should contain code blocks with examples"
+        assert len(opening_blocks) > 0, "README should contain code blocks with examples"
         
-        # Check that major code blocks have language specified
-        languages_found = [lang for lang in matches if lang]
-        assert len(languages_found) >= 2, "Code blocks should specify language for syntax highlighting"
+        # Check that all opening blocks have language specified
+        missing = [(line_num, line_content) for line_num, line_content, lang in opening_blocks if not lang]
+        assert not missing, f"All fenced code blocks must declare a language: {missing}"
         
-    def test_headers_follow_hierarchy(self) -> None:
+    def test_headers_follow_hierarchy(self, readme_content: str) -> None:
         """Test that headers follow proper hierarchy (no skipping levels)."""
-        readme_path = Path(__file__).parent.parent / "README.md"
-        
-        if not readme_path.exists():
-            pytest.skip("README.md not present; skipping hierarchy checks")
-            
-        content = readme_path.read_text(encoding='utf-8')
+        content = readme_content
         
         # Remove code blocks to avoid false positives
         content_without_code = re.sub(r'```[\s\S]*?```', '', content)

@@ -75,6 +75,11 @@ Visit `http://localhost:8000/docs` for the interactive API documentation.
 ## 💡 Usage
 
 ### Basic Query Example
+Install the client library first:
+```bash
+pip install httpx
+```
+
 ```python
 import httpx
 
