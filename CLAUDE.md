@@ -54,7 +54,7 @@ Query → Intent → Route → Retrieve → Rerank → Generate → Validate →
 │   │   └── dependencies.py # Shared dependencies
 │   ├── agents/         # LangGraph agents and workflows
 │   │   ├── supervisor/ # Main routing agent
-│   │   ├── specialists/# Product-specific agents
+│   │   ├── specialists/ # Product-specific agents
 │   │   ├── synthesis/  # Response generation agents
 │   │   └── validation/ # Quality assurance agents
 │   ├── ingestion/      # Document processing pipeline
@@ -111,7 +111,7 @@ Core configuration through environment files:
 **Required Variables:**
 ```bash
 # Database Configuration
-POSTGRES_URL=postgresql://user:pass@localhost:5432/cpskdb
+POSTGRES_URL=postgresql://<user>:<password>@localhost:5432/cpskdb
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 REDIS_URL=redis://localhost:6379
@@ -125,7 +125,7 @@ OLLAMA_HOST=http://localhost:11434
 API_VERSION=v1
 DEBUG=false
 LOG_LEVEL=INFO
-CORS_ORIGINS=["http://localhost:3000"]
+CORS_ORIGINS=http://localhost:3000
 ```
 
 **Optional Variables:**

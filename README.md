@@ -97,7 +97,7 @@ The system uses environment variables for configuration:
 
 ```bash
 # Database Configuration
-POSTGRES_URL=postgresql://user:pass@localhost:5432/cpskdb
+POSTGRES_URL=postgresql://<user>:<password>@localhost:5432/cpskdb
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 REDIS_URL=redis://localhost:6379
