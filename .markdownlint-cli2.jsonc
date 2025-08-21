@@ -1,0 +1,21 @@
+{
+  // Markdownlint configuration for the project
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    ".claude/**",
+    "node_modules/**",
+    ".git/**"
+  ],
+  "config": {
+    // Line length rule - allow slightly longer lines for technical content
+    "MD013": {
+      "line_length": 80,
+      "code_blocks": false,
+      "tables": false
+    },
+    // Allow bare URLs in angle brackets
+    "MD034": false
+  }
+}

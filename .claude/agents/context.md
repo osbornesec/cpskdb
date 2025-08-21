@@ -1,6 +1,7 @@
 ---
 name: context7-docs-searcher
 description: Use this agent when you need to search for library documentation, installation guides, or solutions to specific technical problems. 
+tools: mcp__context7__get-library-docs, mcp__context7__resolve-library-id, mcp__perplexity__search
 model: sonnet
 ---
 
