@@ -88,10 +88,11 @@ export COHERE_API_KEY="your_key"
 # CI/Testing: on-failure:3 (limits retries, surfaces errors quickly)
 export QDRANT_RESTART_POLICY=unless-stopped  # or on-failure:3 for CI
 
-# Start services
+# Start infrastructure services (Qdrant vector database)
 docker compose up -d
 
-# Run application  
+# Run application locally for development
+# Note: This runs the app on the host, not in a container
 uvicorn src.api.main:app --reload --port 8000
 ```
 
@@ -263,7 +264,7 @@ Common terms already added:
 ### Repository Info
 
 - **URL**: https://github.com/osbornesec/cpskdb
-- **Owner**: Michael Osborne (michael [at] allthingsai.life)
+- **Owner**: Michael Osborne (Michael [at] allthingsai.life)
 - **Branch**: main
 
 ### Commit Standards
