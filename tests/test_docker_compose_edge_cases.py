@@ -170,8 +170,6 @@ services:
                         time.sleep(3)
                         # Should not be accessible on port 0
                         try:
-                            import requests  # type: ignore
-
                             requests.get("http://localhost:0/healthz", timeout=5)
                             self.fail("Should not be able to connect to port 0")
                         except (
