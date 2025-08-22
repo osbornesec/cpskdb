@@ -123,7 +123,13 @@ volumes:
                                 ),
                                 f"Expected config error handling in logs: {logs_text[:500]}",
                             )
-                    except Exception:
+                    except (requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
+                        # HTTP timeout or connection error occurred
+                        self.fail(f"HTTP request failed with timeout=5 to http://localhost:6333/healthz: {e}")
+                    except requests.exceptions.RequestException as e:
+                        # Other HTTP-related errors
+                        self.fail(f"HTTP request failed to http://localhost:6333/healthz: {e}")
+                    except Exception as e:
                         config_error_indicators = [
                             "invalid",
                             "error",
@@ -178,7 +184,7 @@ services:
 
                 original_perms = storage_dir.stat().st_mode
                 storage_dir.chmod(0o444)
-                
+
                 # Wait for container to detect permission change
                 start_time = time.monotonic()
                 timeout = 10
