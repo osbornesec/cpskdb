@@ -7,7 +7,6 @@ This module implements graceful shutdown testing for the
 
 import subprocess
 import tempfile
-import time
 import unittest
 
 import requests
@@ -65,31 +64,50 @@ class TestQdrantDockerComposeGracefulShutdown(QdrantDockerComposeTestBase):
         )
         self.assertEqual(stop_result.returncode, 0)
 
-    def test_container_exits_with_zero_code_graceful_shutdown(self):
-        """Test container exits with zero code on graceful shutdown"""
-        compose_content = self.create_production_compose_content()
-        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
-        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+    """Test container exits with zero code on graceful shutdown"""
+compose_content = self.create_production_compose_content()
+self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
+result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+self.assertEqual(result.returncode, 0)
+self.assertTrue(self.wait_for_qdrant_ready())
 
-        stop_result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "stop"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-        self.assertEqual(stop_result.returncode, 0)
+stop_result = subprocess.run(
+    ["docker", "compose", "-f", str(self.compose_file), "stop"],
+    capture_output=True,
+    text=True,
+    cwd=self.temp_dir,
+)
+self.assertEqual(stop_result.returncode, 0)
 
-        inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_production", "--format={{.State.ExitCode}}"],
-            capture_output=True,
-            text=True,
-        )
+# Wait for container state to be updated after stop (fix race condition)
+import time
+max_retries = 10
+retry_delay = 0.5
+exit_code = None
 
-        if inspect_result.returncode == 0:
-            exit_code = inspect_result.stdout.strip()
-            self.assertEqual(exit_code, "0")
+for attempt in range(max_retries):
+    inspect_result = subprocess.run(
+        [
+            "docker",
+            "inspect",
+            "test_qdrant_production",
+            "--format={{.State.ExitCode}}",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    
+    if inspect_result.returncode == 0:
+        exit_code = inspect_result.stdout.strip()
+        # Verify we got a valid exit code (not empty or invalid)
+        if exit_code and exit_code.isdigit():
+            break
+    
+    time.sleep(retry_delay)
+
+# Assert we got a valid exit code and it's 0 (success)
+self.assertIsNotNone(exit_code, "Failed to get container exit code after multiple retries")
+self.assertEqual(exit_code, "0", f"Container should exit with code 0, got: {exit_code}")
 
     def test_data_integrity_maintained_after_graceful_shutdown(self):
         """Test data integrity maintained after graceful shutdown"""
