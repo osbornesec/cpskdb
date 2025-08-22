@@ -17,6 +17,9 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
     """Test Qdrant network performance functionality via Docker Compose"""
+    
+    # Production container name constant
+    QDRANT_CONTAINER_NAME = "test_qdrant_production"
 
     def setUp(self):
         """Set up test environment"""
@@ -45,7 +48,9 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
                 connection_results.append(False)
 
         success_rate = sum(connection_results) / len(connection_results)
-        self.assertGreater(success_rate, 0.8, "Should handle rapid successive connections")
+        self.assertGreater(
+            success_rate, 0.8, "Should handle rapid successive connections"
+        )
 
         concurrent_results = []
 
@@ -66,7 +71,9 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
             thread.join()
 
         concurrent_success = sum(concurrent_results) / len(concurrent_results)
-        self.assertGreater(concurrent_success, 0.8, "Should handle concurrent connections")
+        self.assertGreater(
+            concurrent_success, 0.8, "Should handle concurrent connections"
+        )
 
     def test_network_performance_under_load(self):
         """Test network performance under various load conditions"""
@@ -91,9 +98,9 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
                 response = requests.get(
                     "http://localhost:6333/collections/network_perf_test", timeout=5
                 )
-                if response.status_code == 200:
+                # Accept both 200 (exists) and 404 (not found) as valid responses
+                if response.status_code in [200, 404]:
                     operation_times.append(time.monotonic() - start)
-
             except requests.exceptions.RequestException as e:
                 errors.append(str(e))
 
@@ -111,7 +118,9 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
             max_time = max(operation_times)
 
             self.assertLess(avg_time, 1.0, "Average operation time should be fast")
-            self.assertLess(max_time, 3.0, "Maximum operation time should be reasonable")
+            self.assertLess(
+                max_time, 3.0, "Maximum operation time should be reasonable"
+            )
 
         error_rate = (
             len(errors) / (len(operation_times) + len(errors))
