@@ -41,7 +41,14 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         with open(self.compose_file, "w") as f:
             yaml.dump(config, f)
 
-    def start_qdrant_service(self, compose_file: Path, cwd: Path) -> subprocess.CompletedProcess:
+    def setup_compose_file(self, compose_content: str) -> Path:
+        """Setup docker-compose file in temporary directory."""
+        self.compose_file.write_text(compose_content)
+        return self.compose_file
+
+    def start_qdrant_service(
+        self, compose_file: Path, cwd: Path
+    ) -> subprocess.CompletedProcess:
         """Start Qdrant service using Docker Compose."""
         return subprocess.run(
             ["docker", "compose", "-f", str(compose_file), "up", "-d"],
