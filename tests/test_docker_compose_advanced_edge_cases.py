@@ -182,27 +182,30 @@ services:
                 # Wait for container to detect permission change
                 start_time = time.monotonic()
                 timeout = 10
-                permission_detected = False
                 while time.monotonic() - start_time < timeout:
                     # Check if container can detect the permission issue
                     logs_result = subprocess.run(
                         ["docker", "logs", "--tail", "20", "qdrant"],
-                        capture_output=True, text=True, cwd=temp_dir
+                        capture_output=True,
+                        text=True,
+                        cwd=temp_dir,
                     )
-                    if "permission" in logs_result.stdout.lower() or "access" in logs_result.stdout.lower():
-                        permission_detected = True
+                    if (
+                        "permission" in logs_result.stdout.lower()
+                        or "access" in logs_result.stdout.lower()
+                    ):
                         break
                     time.sleep(0.5)
-                
+
                 storage_dir.chmod(original_perms)
-                
+
                 # Wait for container to recover
                 start_time = time.monotonic()
                 while time.monotonic() - start_time < timeout:
                     try:
                         if self.wait_for_qdrant_ready():
                             break
-                    except:
+                    except Exception:
                         pass
                     time.sleep(0.5)
 
