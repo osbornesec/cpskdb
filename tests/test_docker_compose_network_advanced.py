@@ -7,8 +7,6 @@ isolation, custom configurations, and complex topologies.
 
 import subprocess
 import tempfile
-import time
-import unittest
 
 import requests
 
