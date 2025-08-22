@@ -45,7 +45,7 @@ class TestQdrantDockerComposeAdvancedFeatures(QdrantDockerComposeExtendedTestBas
         if result.returncode == 0:
             # If it starts, verify it can at least respond to health check
             time.sleep(5)  # Give it more time with limited resources
-            health_check = self.wait_for_qdrant_ready(timeout=60)
+            self.wait_for_qdrant_ready(timeout=60)
             # Don't assert success, just check it doesn't crash immediately
 
     def test_docker_compose_profiles_edge_cases(self):
