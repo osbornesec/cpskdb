@@ -8,7 +8,7 @@ environment variables, and restart behavior.
 import os
 import subprocess
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_extended_base import QdrantDockerComposeExtendedTestBase
 
