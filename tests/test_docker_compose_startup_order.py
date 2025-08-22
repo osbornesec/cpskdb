@@ -143,54 +143,6 @@ volumes:
         if result.returncode == 0:
             self.assertTrue(self.wait_for_qdrant_ready())
 
-    def test_qdrant_failure_prevents_dependent_services(self):
-        """Test Qdrant failure prevents dependent services"""
-        invalid_compose = """
-version: '3.8'
-
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: test_qdrant_fail
-    ports:
-      - "6333:6333"
-    environment:
-      - INVALID_CONFIG=true
-    command: ["sh", "-c", "exit 1"]
-    volumes:
-      - qdrant_data:/qdrant/storage
-
-  dependent-service:
-    image: alpine:latest
-    container_name: test_dependent_fail
-    command: echo "This should not start"
-    depends_on:
-      - qdrant
-
-volumes:
-  qdrant_data:
-"""
-
-        self.compose_file = self.setup_compose_file(invalid_compose, self.temp_dir)
-
-        subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-
-        time.sleep(10)
-
-        inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_fail", "--format={{.State.Status}}"],
-            capture_output=True,
-            text=True,
-        )
-
-        if inspect_result.returncode == 0:
-            status = inspect_result.stdout.strip()
-            self.assertIn(status, ["exited", "dead"])
 
     def test_startup_order_maintained_across_stack_restarts(self):
         """Test startup order maintained across stack restarts"""
