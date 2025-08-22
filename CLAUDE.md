@@ -253,9 +253,7 @@ Common terms already added:
 @agent-context7-docs-searcher "Research [specific need]"
 ```
 
-
 ---
-
 
 ## 🎯 Development Environment
 
