@@ -16,27 +16,27 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
     """Test Qdrant API endpoints accessibility via Docker Compose"""
 
+    def setUp(self):
+        """Set up test environment"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.compose_file = None
+
     def tearDown(self):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
-        # Clean up temporary directory
-        import shutil
-        if hasattr(self, 'temp_dir') and self.temp_dir:
-            shutil.rmtree(self.temp_dir, ignore_errors=True)
+
     def test_collections_endpoint_accessible(self):
         """Test /collections endpoint returns valid JSON with collections list"""
-        # Setup and start Qdrant
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
-        # Wait for service to be ready
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        # Test collections endpoint
-        response = self.assert_endpoint_accessible("/collections")
+        response = requests.get("http://localhost:6333/collections", timeout=10)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("result", data)
         self.assertIn("collections", data["result"])
@@ -44,16 +44,13 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
 
     def test_cluster_endpoint_accessible(self):
         """Test /cluster endpoint returns cluster information"""
-        # Setup and start Qdrant
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
-        # Wait for service to be ready
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        # Test cluster endpoint (may return 404 in single-node setup, which is acceptable)
         response = requests.get("http://localhost:6333/cluster", timeout=10)
         self.assertIn(response.status_code, [200, 404])
 
@@ -81,3 +78,23 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
                 or "# TYPE" in metrics_text
                 or len(metrics_text) > 0
             )
+
+    def test_service_info_endpoint_accessible(self):
+        """Test service info endpoint / returns proper Qdrant version and title information"""
+        compose_content = self.create_production_compose_content()
+        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(result.returncode, 0)
+
+        self.assertTrue(self.wait_for_qdrant_ready())
+
+        response = requests.get("http://localhost:6333/", timeout=10)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("title", data)
+        self.assertIn("version", data)
+        self.assertEqual(data["title"], "qdrant - vector search engine")
+
+
+if __name__ == "__main__":
+    unittest.main()
