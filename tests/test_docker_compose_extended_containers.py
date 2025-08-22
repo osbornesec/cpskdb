@@ -55,7 +55,7 @@ services:
       - QDRANT__LOG_LEVEL=INFO
       - SPECIAL_VAR=value with spaces & symbols!@#$$%^&*()
       - UNICODE_VAR=测试中文字符
-      - JSON_VAR={"key": "value", "number": 123}
+      - JSON_VAR={"key":"value","number":123}
 """
 
         self.setup_compose_file(compose_content)
