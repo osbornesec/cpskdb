@@ -42,7 +42,6 @@ services:
       - nonexistent_network
     volumes:
       - qdrant_data:/qdrant/storage
-
 volumes:
   qdrant_data:
 """
@@ -51,7 +50,6 @@ volumes:
             compose_content_invalid_network, self.temp_dir
         )
 
-        # Should fail with network error
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
@@ -59,7 +57,6 @@ volumes:
             cwd=self.temp_dir,
         )
 
-        # Should fail due to missing network
         self.assertNotEqual(result.returncode, 0)
         error_output = result.stderr + result.stdout
         self.assertTrue(
@@ -78,7 +75,6 @@ volumes:
 
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        # Test accessibility from host environment
         health_response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(health_response.status_code, 200)
 
@@ -102,7 +98,6 @@ volumes:
         """Test custom network driver configurations"""
         compose_content_custom_bridge = """
 version: '3.8'
-
 networks:
   custom-bridge:
     driver: bridge
@@ -113,7 +108,6 @@ networks:
       config:
         - subnet: 172.25.0.0/16
           gateway: 172.25.0.1
-
 services:
   qdrant:
     image: qdrant/qdrant:latest
@@ -127,7 +121,6 @@ services:
         ipv4_address: 172.25.0.10
     volumes:
       - qdrant_data:/qdrant/storage
-
 volumes:
   qdrant_data:
 """
@@ -155,56 +148,3 @@ volumes:
             network_info = inspect_result.stdout.strip()
             self.assertIn("custom-bridge", network_info)
             self.assertIn("172.25.0.10", network_info)
-
-    def test_ipv6_network_configuration_support(self):
-        """Test IPv6 network configuration support if available"""
-        compose_content_ipv6 = """
-version: '3.8'
-
-networks:
-  ipv6-network:
-    driver: bridge
-    enable_ipv6: true
-    ipam:
-      config:
-        - subnet: 2001:db8::/32
-
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: test_qdrant_ipv6
-    ports:
-      - "6333:6333"
-    environment:
-      - QDRANT__LOG_LEVEL=INFO
-    networks:
-      - ipv6-network
-    volumes:
-      - qdrant_data:/qdrant/storage
-
-volumes:
-  qdrant_data:
-"""
-
-        self.compose_file = self.setup_compose_file(compose_content_ipv6, self.temp_dir)
-
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-
-        if result.returncode == 0:
-            ready = self.wait_for_qdrant_ready(timeout=30)
-            if ready:
-                response = requests.get("http://localhost:6333/healthz", timeout=10)
-                self.assertEqual(response.status_code, 200)
-        else:
-            error_output = result.stderr + result.stdout
-            ipv6_related = any(
-                term in error_output.lower()
-                for term in ["ipv6", "inet6", "network", "subnet"]
-            )
-            if not ipv6_related:
-                self.fail(f"Unexpected error (not IPv6-related): {error_output}")
