@@ -9,8 +9,6 @@ import subprocess
 import tempfile
 import time
 
-import requests
-
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
