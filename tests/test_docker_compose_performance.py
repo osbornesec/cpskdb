@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import threading
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
