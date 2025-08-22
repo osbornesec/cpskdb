@@ -10,14 +10,15 @@ from tests.test_docker_compose_extended_base import QdrantDockerComposeExtendedT
 class TestQdrantDockerComposeNetworkEdgeCases(QdrantDockerComposeExtendedTestBase):
     """Network and configuration edge cases for Qdrant Docker Compose."""
 
-    """Test Docker Compose with complex volume mount paths."""
-# Create nested directory structure
-complex_path = (
-    self.temp_dir / "very" / "nested" / "path with spaces" / "qdrant_data"
-)
-complex_path.mkdir(parents=True, exist_ok=True)
+    def test_volume_mount_with_complex_paths(self):
+        """Test Docker Compose with complex volume mount paths."""
+        # Create nested directory structure
+        complex_path = (
+            self.temp_dir / "very" / "nested" / "path with spaces" / "qdrant_data"
+        )
+        complex_path.mkdir(parents=True, exist_ok=True)
 
-compose_content = f"""
+        compose_content = f"""
 version: '3.8'
 services:
   qdrant:
@@ -32,11 +33,11 @@ services:
       - QDRANT__LOG_LEVEL=INFO
 """
 
-self.setup_compose_file(compose_content)
-result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-self.assertEqual(result.returncode, 0)
+        self.setup_compose_file(compose_content)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(result.returncode, 0)
 
-self.assertTrue(self.wait_for_qdrant_ready())
+        self.assertTrue(self.wait_for_qdrant_ready())
 
     def test_docker_compose_version_compatibility(self):
         """Test Docker Compose file with different version specifications."""
