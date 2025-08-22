@@ -117,24 +117,13 @@ System:
 
 ## 🔧 Development Workflow
 
-### CRITICAL: Code Operations Protocol
+### Research-First Development
 
-**PRIMARY TOOLS** (Always use first):
-
-1. **Serena MCP**: All code search/edit operations
-2. **Context7 MCP**: Documentation research  
-3. **Traditional tools**: FALLBACK ONLY
-
-**Research-First Development**:
+**Always use before coding**:
 
 ```bash
 # Before ANY coding
 @agent-context7-docs-searcher "Research [topic/library/pattern]"
-
-# Then implement using Serena MCP tools
-mcp__serena__find_symbol
-mcp__serena__replace_symbol_body
-mcp__serena__insert_after_symbol
 ```
 
 ### Test-Driven Development
@@ -177,63 +166,6 @@ service configuration
 
 ---
 
-## 🛠️ Serena MCP Operations
-
-### Code Search (Primary Methods)
-
-```python
-# Find symbols by pattern
-mcp__serena__find_symbol(
-    name_path="ClassName/methodName",
-    include_body=True,
-    depth=1
-)
-
-# Search patterns across codebase
-mcp__serena__search_for_pattern(
-    substring_pattern="TODO|FIXME",
-    restrict_search_to_code_files=True
-)
-
-# Get file overview
-mcp__serena__get_symbols_overview(
-    relative_path="src/api/"
-)
-```
-
-### Code Editing (Symbol-Based)
-
-```python
-# Replace entire functions/classes
-mcp__serena__replace_symbol_body(
-    name_path="functionName",
-    relative_path="file.py", 
-    body="new implementation"
-)
-
-# Insert new code
-mcp__serena__insert_after_symbol(
-    name_path="lastMethod",
-    body="def new_method():\n    pass"
-)
-```
-
-### Memory Management
-
-```python
-# Store project knowledge
-mcp__serena__write_memory(
-    memory_name="test_patterns",
-    content="TDD implementation strategies..."
-)
-
-# Retrieve stored knowledge  
-mcp__serena__read_memory(
-    memory_file_name="architecture_overview.md"
-)
-```
-
----
 
 ## 📋 Quality Standards
 
@@ -322,91 +254,9 @@ Common terms already added:
 @agent-context7-docs-searcher "Research [specific need]"
 ```
 
-### Project Memory
-
-Location: `.claude/memories/`
-
-- Architecture patterns
-- Implementation decisions  
-- Task completion tracking
-- Best practices discovered
 
 ---
 
-## 🛠️ Detailed Serena MCP Reference
-
-### Core Capabilities
-
-#### Search Code (ALWAYS use these first)
-
-- **Find symbols**: `mcp__serena__find_symbol(name_path="ClassName", include_body=True)`
-  - Searches for code entities by name path pattern
-  - Supports depth parameter to retrieve children (e.g., methods of a class)
-  - Can include/exclude specific symbol kinds (classes, functions, variables, etc.)
-  
-- **Find references**: `mcp__serena__find_referencing_symbols(name_path=
-  "methodName", relative_path="file.py")`
-  - Finds all references to a specific symbol
-  - Returns metadata and code snippets around references
-  
-- **Pattern search**: `mcp__serena__search_for_pattern(substring_pattern=
-  "TODO|FIXME")`
-  - Flexible regex search across codebase
-  - Supports file inclusion/exclusion globs
-  - Can restrict to code files only
-  
-- **Symbol overview**: `mcp__serena__get_symbols_overview(relative_path=
-  "src/")`
-  - High-level understanding of symbols in a file
-  - Shows top-level classes, functions, variables
-  - Essential first step when exploring new files
-
-#### File Operations
-
-- **List directory**: `mcp__serena__list_dir(relative_path=".",
-  recursive=true)`
-  - Lists non-git ignored files and directories
-  
-- **Find files**: `mcp__serena__find_file(file_mask="*.py",
-  relative_path=".")`
-  - Finds files matching patterns using wildcards
-
-#### Edit Code (PREFER symbol-based operations)
-
-- **Replace symbol body**: `mcp__serena__replace_symbol_body(name_path=
-  "functionName", relative_path="file.py", body="new code")`
-  - Replaces entire function/class/method body
-  - Preserves indentation and context
-  
-- **Insert before symbol**: `mcp__serena__insert_before_symbol(name_path=
-  "className", body="imports")`
-  - Ideal for adding imports or new top-level definitions
-  
-- **Insert after symbol**: `mcp__serena__insert_after_symbol(name_path=
-  "methodName", body="new method")`
-  - Adds new methods, functions, or classes after existing ones
-
-#### Project Management
-
-- **Check onboarding**: `mcp__serena__check_onboarding_performed()`
-- **Onboarding**: `mcp__serena__onboarding()`
-
-#### Thinking Tools (Use strategically)
-
-- **Think about collected information**:
-  `mcp__serena__think_about_collected_information()`
-- **Think about task adherence**: `mcp__serena__think_about_task_adherence()`
-- **Think about whether done**: `mcp__serena__think_about_whether_you_are_done()`
-
-### Best Practices
-
-1. **Symbol-based editing over text replacement**
-2. **Efficient code exploration**: Start with overview, then targeted reads
-3. **Name path patterns**: Simple ("method"), relative ("class/method"),
-   absolute ("/class/method")
-4. **Always verify before editing**: Use thinking tools, find references
-
----
 
 ## 🎯 Development Environment
 
@@ -442,5 +292,4 @@ Docker Compose validation following TDD methodology.
 
 Do what has been asked; nothing more, nothing less.
 ALWAYS use @agent-context7-docs-searcher BEFORE writing any code.
-Use Serena MCP for code operations, with traditional tools as fallback only.
 For ALL documentation research, use @agent-context7-docs-searcher.
