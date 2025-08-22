@@ -41,29 +41,13 @@ volumes:
   qdrant_data:
 """
 
-        temp_dir = tempfile.mkdtemp()
-        compose_file = self.setup_compose_file(compose_content, temp_dir)
-
-        try:
-            result = subprocess.run(
-                ["docker", "compose", "-f", str(compose_file), "up", "-d"],
-                capture_output=True,
-                text=True,
-                cwd=temp_dir,
-            )
-
-            if result.returncode == 0:
-                ready = self.wait_for_qdrant_ready()
-                if ready:
-                    response = requests.get("http://localhost:6333/healthz", timeout=10)
-                    self.assertEqual(response.status_code, 200)
-        finally:
-            subprocess.run(
-                ["docker", "compose", "-f", str(compose_file), "down", "-v"],
-                capture_output=True,
-                cwd=temp_dir,
-            )
-            shutil.rmtree(temp_dir, ignore_errors=True)
+        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(result.returncode, 0)
+        
+        self.assertTrue(self.wait_for_qdrant_ready())
+        response = requests.get("http://localhost:6333/healthz", timeout=10)
+        self.assertEqual(response.status_code, 200)
 
     def test_qdrant_maximum_connection_load(self):
         """Test Qdrant maximum connection load"""
