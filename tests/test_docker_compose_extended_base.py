@@ -33,6 +33,13 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             )
         except Exception:
             pass
+        
+        # Force cleanup any remaining containers
+        self.force_cleanup_containers()
+        
+        # Wait for port to be available
+        self.wait_for_port_available()
+        
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def create_compose_file_from_dict(self, config: Dict[str, Any]) -> None:
@@ -84,11 +91,12 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
     def wait_for_port_available(self, port: int = 6333, timeout: int = 10) -> bool:
         """Wait for a port to become available."""
         import socket
+
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.bind(('localhost', port))
+                    s.bind(("localhost", port))
                 return True
             except OSError:
                 time.sleep(0.5)
@@ -97,17 +105,18 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
     def force_cleanup_containers(self) -> None:
         """Force cleanup any remaining containers on port 6333."""
         import subprocess
-        
+
         # Stop any containers using port 6333
         try:
             result = subprocess.run(
-                ['docker', 'ps', '--filter', 'publish=6333', '--format', '{{.Names}}'],
-                capture_output=True, text=True
+                ["docker", "ps", "--filter", "publish=6333", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
-                container_names = result.stdout.strip().split('\n')
+                container_names = result.stdout.strip().split("\n")
                 for name in container_names:
-                    subprocess.run(['docker', 'stop', name], capture_output=True)
-                    subprocess.run(['docker', 'rm', name], capture_output=True)
+                    subprocess.run(["docker", "stop", name], capture_output=True)
+                    subprocess.run(["docker", "rm", name], capture_output=True)
         except Exception:
             pass
