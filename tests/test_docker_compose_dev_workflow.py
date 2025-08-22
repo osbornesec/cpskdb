@@ -30,6 +30,14 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        
+        # Clean up temporary directory
+        if self.temp_dir and os.path.exists(self.temp_dir):
+            try:
+                shutil.rmtree(self.temp_dir)
+            except Exception:
+                # Log but don't fail teardown
+                pass
 
     def test_complete_developer_setup_from_fresh_environment(self):
         """Test complete developer setup from fresh environment"""
@@ -44,7 +52,9 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
 
-        collections_response = requests.get("http://localhost:6333/collections", timeout=10)
+        collections_response = requests.get(
+            "http://localhost:6333/collections", timeout=10
+        )
         self.assertEqual(collections_response.status_code, 200)
 
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
