@@ -6,7 +6,7 @@ This module implements graceful shutdown, signal handling, and state preservatio
 
 import subprocess
 import time
-import requests
+import requests  # type: ignore
 import unittest
 
 from tests.test_docker_compose_extended_base import QdrantDockerComposeExtendedTestBase
@@ -59,10 +59,12 @@ services:
         )
         end_time = time.time()
         shutdown_duration = end_time - start_time
-        
+
         self.assertEqual(stop_result.returncode, 0)
         # Assert shutdown completed within grace period
-        self.assertLessEqual(shutdown_duration, 35.0, "Shutdown should complete within grace period")
+        self.assertLessEqual(
+            shutdown_duration, 35.0, "Shutdown should complete within grace period"
+        )
 
     def test_container_exits_with_zero_code_graceful_shutdown(self):
         """Test container exits with zero code on graceful shutdown"""
@@ -96,18 +98,22 @@ services:
                 capture_output=True,
                 text=True,
             )
-            
+
             if inspect_result.returncode == 0:
                 exit_code = inspect_result.stdout.strip()
                 # Verify we got a valid exit code (not empty or invalid)
                 if exit_code and exit_code.isdigit():
                     break
-            
+
             time.sleep(retry_delay)
 
         # Assert we got a valid exit code and it's 0 (success)
-        self.assertIsNotNone(exit_code, "Failed to get container exit code after multiple retries")
-        self.assertEqual(exit_code, "0", f"Container should exit with code 0, got: {exit_code}")
+        self.assertIsNotNone(
+            exit_code, "Failed to get container exit code after multiple retries"
+        )
+        self.assertEqual(
+            exit_code, "0", f"Container should exit with code 0, got: {exit_code}"
+        )
 
     def test_data_integrity_maintained_after_graceful_shutdown(self):
         """Test data integrity maintained after graceful shutdown"""
@@ -118,35 +124,26 @@ services:
         self.assertTrue(self.wait_for_qdrant_ready())
 
         # Create a collection and add some data
-        collection_data = {
-            "vectors": {
-                "size": 128,
-                "distance": "Cosine"
-            }
-        }
-        
+        collection_data = {"vectors": {"size": 128, "distance": "Cosine"}}
+
         # Create collection
         requests.put(
             "http://localhost:6333/collections/test_shutdown",
             json=collection_data,
-            timeout=10
+            timeout=10,
         )
 
         # Add a test vector
         vector_data = {
             "points": [
-                {
-                    "id": 1,
-                    "vector": [0.1] * 128,
-                    "payload": {"shutdown_test": True}
-                }
+                {"id": 1, "vector": [0.1] * 128, "payload": {"shutdown_test": True}}
             ]
         }
-        
+
         requests.put(
             "http://localhost:6333/collections/test_shutdown/points",
             json=vector_data,
-            timeout=10
+            timeout=10,
         )
 
         # Graceful shutdown
@@ -164,11 +161,15 @@ services:
         self.assertTrue(self.wait_for_qdrant_ready())
 
         # Verify collection exists
-        response = requests.get("http://localhost:6333/collections/test_shutdown", timeout=10)
+        response = requests.get(
+            "http://localhost:6333/collections/test_shutdown", timeout=10
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verify vector exists
-        response = requests.get("http://localhost:6333/collections/test_shutdown/points/1", timeout=10)
+        response = requests.get(
+            "http://localhost:6333/collections/test_shutdown/points/1", timeout=10
+        )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["result"]["payload"]["shutdown_test"], True)
@@ -183,7 +184,12 @@ services:
 
         # Verify container is running
         inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_production", "--format={{.State.Running}}"],
+            [
+                "docker",
+                "inspect",
+                "test_qdrant_production",
+                "--format={{.State.Running}}",
+            ],
             capture_output=True,
             text=True,
         )
@@ -200,11 +206,16 @@ services:
 
         # Check final container state
         inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_production", "--format={{.State.Running}}"],
+            [
+                "docker",
+                "inspect",
+                "test_qdrant_production",
+                "--format={{.State.Running}}",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         # Container should have stopped gracefully
         self.assertIn(inspect_result.stdout.strip(), ["false", ""])
 
@@ -214,16 +225,18 @@ services:
             capture_output=True,
             text=True,
         )
-        
+
         # Verify logs contain shutdown-related messages (flexible check)
         log_content = logs_result.stdout.lower() + logs_result.stderr.lower()
         shutdown_indicators = ["shutdown", "exit", "stop", "term", "signal"]
-        has_shutdown_log = any(indicator in log_content for indicator in shutdown_indicators)
-        
+        has_shutdown_log = any(
+            indicator in log_content for indicator in shutdown_indicators
+        )
+
         # Assert either explicit shutdown message or clean exit
         self.assertTrue(
             has_shutdown_log or logs_result.returncode == 0,
-            f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:200]}..."
+            f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:200]}...",
         )
 
 
