@@ -8,8 +8,9 @@ This module implements comprehensive state persistence testing for scenarios
 
 import subprocess
 import tempfile
+import unittest
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
@@ -26,6 +27,10 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        # Clean up temporary directory
+        if hasattr(self, "temp_dir") and self.temp_dir:
+            import shutil
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_collection_metadata_persists_across_restarts(self):
         """Test collection metadata persists across restarts"""
@@ -59,7 +64,16 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
 
         collection_info = info_response.json()
         self.assertIn("result", collection_info)
-        self.assertEqual(collection_info["result"]["config"]["params"]["vectors"]["size"], 128)
+        
+        # Safe nested JSON access with proper error handling
+        result = collection_info.get("result", {})
+        config = result.get("config", {})
+        params = config.get("params", {})
+        vectors = params.get("vectors", {})
+        size = vectors.get("size")
+        
+        self.assertIsNotNone(size, "Vector size should be present in config")
+        self.assertEqual(size, 128)
 
     def test_index_state_preserved_after_restart(self):
         """Test index state preserved after restart"""
@@ -130,11 +144,13 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
 
         test_vectors = []
         for i in range(10):
-            test_vectors.append({
-                "id": i + 1,
-                "vector": [float(i % 4)] * 8,
-                "payload": {"category": f"test_{i}", "value": i * 10}
-            })
+            test_vectors.append(
+                {
+                    "id": i + 1,
+                    "vector": [float(i % 4)] * 8,
+                    "payload": {"category": f"test_{i}", "value": i * 10},
+                }
+            )
 
         batch_data = {"points": test_vectors}
         upsert_response = requests.put(
@@ -185,3 +201,62 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         for result in search_results["result"]:
             self.assertIn("payload", result)
             self.assertIn("category", result["payload"])
+    
+    def test_volume_persistence_verification(self):
+        """Test volume persistence verification across container lifecycle"""
+        compose_content = self.create_production_compose_content()
+        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(self.wait_for_qdrant_ready())
+        
+        # Verify volume mount exists
+        inspect_result = subprocess.run(
+            ["docker", "inspect", "test_qdrant_production", "--format={{.Mounts}}"],
+            capture_output=True,
+            text=True,
+        )
+        
+        if inspect_result.returncode == 0:
+            mounts_info = inspect_result.stdout
+            self.assertIn("qdrant", mounts_info.lower(), "Expected Qdrant volume mount")
+            # Check if the mount is a volume (not bind mount)
+            self.assertIn("volume", mounts_info.lower(), "Expected volume type mount")
+        
+        # Create test data to verify persistence
+        collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
+        create_response = requests.put(
+            "http://localhost:6333/collections/volume_persist_test",
+            json=collection_config,
+            timeout=10,
+        )
+        self.assertIn(create_response.status_code, [200, 201])
+        
+        # Stop and remove container (but keep volume)
+        down_result = subprocess.run(
+            ["docker", "compose", "-f", str(self.compose_file), "down"],
+            capture_output=True,
+            text=True,
+            cwd=self.temp_dir,
+        )
+        self.assertEqual(down_result.returncode, 0)
+        
+        # Start again and verify data persisted
+        up_result = subprocess.run(
+            ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
+            capture_output=True,
+            text=True,
+            cwd=self.temp_dir,
+        )
+        self.assertEqual(up_result.returncode, 0)
+        self.assertTrue(self.wait_for_qdrant_ready())
+        
+        # Verify collection still exists
+        get_response = requests.get(
+            "http://localhost:6333/collections/volume_persist_test", timeout=10
+        )
+        self.assertEqual(get_response.status_code, 200, "Collection should persist with volume")
+
+
+if __name__ == "__main__":
+    unittest.main()
