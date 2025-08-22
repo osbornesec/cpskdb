@@ -27,6 +27,10 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        # Clean up temporary directory
+        if hasattr(self, "temp_dir") and self.temp_dir:
+            import shutil
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_snapshots_volume_mounts_correctly(self):
         """Test snapshots volume mounts correctly"""
