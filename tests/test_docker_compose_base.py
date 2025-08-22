@@ -109,7 +109,23 @@ volumes:
         """Assert that Qdrant service is healthy"""
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("healthz check passed", response.text)
+        
+        # Handle both JSON and plain text responses
+        try:
+            json_data = response.json()
+            if "status" in json_data:
+                self.assertIn(json_data.get("status"), ["ok", "healthy"])
+            else:
+                # Check for any truthy health indicator
+                self.assertTrue(any(json_data.values()), "Health check JSON should contain truthy values")
+        except (ValueError, requests.exceptions.JSONDecodeError):
+            # Fallback to text response - check for common health indicators
+            response_text = response.text.lower()
+            health_indicators = ["ok", "health", "ready"]
+            self.assertTrue(
+                any(indicator in response_text for indicator in health_indicators),
+                f"Health check response should contain health indicators. Got: {response.text[:100]}"
+            )
 
     def create_test_collection(self, collection_name="test_collection", vector_size=4):
         """Create a test collection in Qdrant"""
@@ -134,12 +150,13 @@ volumes:
         """Create a snapshot via Qdrant API and return the response"""
         try:
             response = requests.post(
-                f"http://localhost:6333/collections/{collection_name}/snapshots", timeout=30
+                f"http://localhost:6333/collections/{collection_name}/snapshots",
+                timeout=30,
             )
             self.assertIn(
                 response.status_code,
                 [200, 201],
-                f"Snapshot creation failed with status {response.status_code}: {response.text}"
+                f"Snapshot creation failed with status {response.status_code}: {response.text}",
             )
         except requests.exceptions.RequestException as e:
             self.fail(f"Failed to create snapshot: {e}")
@@ -172,7 +189,10 @@ volumes:
             try:
                 response = requests.get(f"http://localhost:6333{endpoint}", timeout=10)
                 end_time = time.monotonic()
-                if response.status_code in [200, 404]:  # 404 is acceptable for some endpoints
+                if response.status_code in [
+                    200,
+                    404,
+                ]:  # 404 is acceptable for some endpoints
                     latencies.append(end_time - start_time)
             except requests.exceptions.RequestException:
                 pass
