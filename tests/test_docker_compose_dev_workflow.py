@@ -115,7 +115,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
                 },
                 {
                     "id": 2,
-                    "vector": [0.2] * 128,
+                    "vector": [VECTOR_VAL_B] * VECTOR_DIM,
                     "payload": {"text": "Second document"},
                 },
             ]
