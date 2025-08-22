@@ -193,7 +193,7 @@ volumes:
 
         self.compose_file = self.setup_compose_file(invalid_compose, self.temp_dir)
 
-        result = subprocess.run(
+        subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
             text=True,
