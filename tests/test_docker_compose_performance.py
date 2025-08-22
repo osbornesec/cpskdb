@@ -2,14 +2,14 @@
 Performance and resource tests for Qdrant Docker Compose configuration
 """
 
-import random
+import shutil
 import subprocess
 import tempfile
-import time
 import threading
-import concurrent.futures
 
-from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: ignore
+import requests
+
+from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposePerformance(QdrantDockerComposeTestBase):
