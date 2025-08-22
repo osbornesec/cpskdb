@@ -32,34 +32,20 @@ class TestQdrantDockerComposeStartupOrder(QdrantDockerComposeTestBase):
         """Create compose configuration with dependent services"""
         return """
 version: '3.8'
-
 services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: test_qdrant_startup
     ports:
       - "6333:6333"
-    environment:
-      - QDRANT__LOG_LEVEL=INFO
     volumes:
       - qdrant_data:/qdrant/storage
-
   test-client:
     image: alpine:latest
     container_name: test_client_startup
-    command: >
-      sh -c "
-        echo 'Client starting...';
-        while ! wget -q --spider http://qdrant:6333/healthz; do
-          echo 'Waiting for Qdrant...';
-          sleep 2;
-        done;
-        echo 'Qdrant is ready';
-        sleep 30;
-      "
+    command: sh -c "while ! wget -q --spider http://qdrant:6333/healthz; do sleep 2; done; echo 'Ready'"
     depends_on:
       - qdrant
-
 volumes:
   qdrant_data:
 """
