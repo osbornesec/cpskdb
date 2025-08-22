@@ -21,21 +21,20 @@ class TestQdrantDockerComposeContainerEdgeCases(QdrantDockerComposeExtendedTestB
         # Create a very long container name (Docker has limits)
         long_name = "a" * 200  # Exceeds typical container name limits
 
-        config = {
-            "services": {
-                "qdrant": {
-                    "image": "qdrant/qdrant:latest",
-                    "container_name": long_name,
-                    "ports": ["6333:6333"],
-                    "environment": {
-                        "QDRANT__SERVICE__HTTP_PORT": 6333,
-                        "QDRANT__LOG_LEVEL": "INFO",
-                    },
-                }
-            }
-        }
+        compose_content = f"""
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: {long_name}
+    ports:
+      - "6333:6333"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__LOG_LEVEL=INFO
+"""
 
-        self.create_compose_file(config)
+        self.setup_compose_file(compose_content)
 
         # Should fail due to container name length
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
