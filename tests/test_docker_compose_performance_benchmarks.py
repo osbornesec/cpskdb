@@ -6,7 +6,6 @@ This module implements performance benchmark testing for scenarios
 "Qdrant Long-Running Memory Stability" from the test specification.
 """
 
-import subprocess
 import tempfile
 import time
 import unittest
