@@ -427,34 +427,28 @@ volumes:
             capture_output=True,
             text=True,
         )
-                    # Should not expose sensitive paths or information
-                    sensitive_terms = [
-                        "/root/",
-                        "/home/",
-                        "password=",
-                        "secret=",
-                        "token=",
-                        "api_key=",
-                        "private_key",
-                        "BEGIN RSA",
-                        "BEGIN PRIVATE",
-                    ]
 
-                    for sensitive_term in sensitive_terms:
-                        self.assertNotIn(
-                            sensitive_term,
-                            error_content,
-                            f"Error message should not expose sensitive term '{sensitive_term}' in response to {method} {url}",
-                        )
-                term in logs_content.lower()
-                for term in ["qdrant", "vector", "collection", "storage"]
-            ),
-        ]
+        if logs_result.returncode == 0:
+            logs_content = logs_result.stdout + logs_result.stderr
 
-        self.assertTrue(
-            any(log_quality_indicators),
-            f"Logs should be well-structured and informative: {logs_content[:300]}",
-        )
+            # Logs should contain useful information
+            self.assertTrue(len(logs_content) > 0, "No logs available")
+
+            # Check for log quality indicators
+            log_quality_indicators = [
+                # Logs should have structured information
+                len(logs_content.strip()) > 50,
+                # Should contain relevant terms
+                any(
+                    term in logs_content.lower()
+                    for term in ["qdrant", "vector", "collection", "storage"]
+                ),
+            ]
+
+            self.assertTrue(
+                any(log_quality_indicators),
+                f"Logs should be well-structured and informative: {logs_content[:300]}",
+            )
 
     def test_api_error_response_format_consistency(self):
         """Test API error responses follow consistent format"""
