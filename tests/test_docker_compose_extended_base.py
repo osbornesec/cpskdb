@@ -35,10 +35,12 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             pass
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def create_compose_file(self, config: Dict[str, Any]) -> None:
-        """Create docker-compose.yml file with given config."""
-        with open(self.compose_file, "w") as f:
-            yaml.dump(config, f)
+    def create_compose_file_from_dict(self, config: Dict[str, Any]) -> None:
+        """Create docker-compose.yml file with given config dictionary."""
+        # This method is deprecated - use setup_compose_file with string content instead
+        raise NotImplementedError(
+            "Use setup_compose_file with string templates instead of config dictionaries"
+        )
 
     def setup_compose_file(self, compose_content: str) -> Path:
         """Setup docker-compose file in temporary directory."""
