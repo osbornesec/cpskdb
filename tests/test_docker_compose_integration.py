@@ -174,8 +174,6 @@ services:
                 )
                 self.assert_qdrant_healthy()
 
-                import requests
-
                 info_response = requests.get("http://localhost:6333/", timeout=10)
                 self.assertEqual(info_response.status_code, 200)
                 service_info = info_response.json()
