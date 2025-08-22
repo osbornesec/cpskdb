@@ -5,6 +5,7 @@ This module implements comprehensive snapshots volume testing that addresses
 the "Qdrant Snapshots Volume Mounts Correctly" scenario from the test specification.
 """
 
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -45,7 +46,7 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
             capture_output=True,
             text=True,
         )
-        
+
         if inspect_result.returncode == 0:
             mounts_info = inspect_result.stdout
             self.assertIn("qdrant", mounts_info.lower())
@@ -72,7 +73,7 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
             "http://localhost:6333/collections/snapshot_test/snapshots",
             timeout=30,
         )
-        
+
         # Snapshot creation may or may not be supported depending on configuration
         self.assertIn(snapshot_response.status_code, [200, 201, 404, 405])
 
