@@ -42,24 +42,23 @@ services:
 
     def test_special_characters_in_environment_variables(self):
         """Test Docker Compose with special characters in environment variables."""
-        config = {
-            "services": {
-                "qdrant": {
-                    "image": "qdrant/qdrant:latest",
-                    "container_name": "qdrant-test",
-                    "ports": ["6333:6333"],
-                    "environment": {
-                        "QDRANT__SERVICE__HTTP_PORT": 6333,
-                        "QDRANT__LOG_LEVEL": "INFO",
-                        "SPECIAL_VAR": "value with spaces & symbols!@#$%^&*()",
-                        "UNICODE_VAR": "测试中文字符",
-                        "JSON_VAR": '{"key": "value", "number": 123}',
-                    },
-                }
-            }
-        }
+        compose_content = """
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-test
+    ports:
+      - "6333:6333"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__LOG_LEVEL=INFO
+      - SPECIAL_VAR=value with spaces & symbols!@#$$%^&*()
+      - UNICODE_VAR=测试中文字符
+      - JSON_VAR={"key": "value", "number": 123}
+"""
 
-        self.create_compose_file(config)
+        self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
