@@ -77,8 +77,6 @@ volumes:
             self.assertTrue(self.wait_for_qdrant_ready())
 
             # Test concurrent connections
-            import threading
-
             connection_results = []
 
             def make_request():
