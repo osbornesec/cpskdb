@@ -88,21 +88,26 @@ services:
 
             try:
                 assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
-                time.sleep(5)
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
+                self.assertTrue(self.wait_for_qdrant_ready())
 
                 response = requests.get("http://localhost:6333/healthz", timeout=10)
                 assert response.status_code == 200, (
                     f"Health check failed: {response.status_code}"
                 )
                 # Use proper assertion method instead of assert
-                health_response_valid = any([
-                    "ok" in response.text.lower(),
-                    "healthy" in response.text.lower(), 
-                    "running" in response.text.lower(),
-                    response.status_code == 200
-                ])
-                self.assertTrue(health_response_valid, 
-                               f"Unexpected health response: {response.text}")
+                health_response_valid = any(
+                    [
+                        "ok" in response.text.lower(),
+                        "healthy" in response.text.lower(),
+                        "running" in response.text.lower(),
+                        response.status_code == 200,
+                    ]
+                )
+                self.assertTrue(
+                    health_response_valid,
+                    f"Unexpected health response: {response.text}",
+                )
 
             finally:
                 subprocess.run(
@@ -147,7 +152,7 @@ volumes:
                     cwd=temp_dir,
                 )
                 assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
-                time.sleep(5)
+                self.wait_for_qdrant_ready()
 
                 test_data = {"vectors": {"size": 4, "distance": "Cosine"}}
                 create_response = requests.put(
