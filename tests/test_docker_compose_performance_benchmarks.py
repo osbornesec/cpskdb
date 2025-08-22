@@ -6,7 +6,6 @@ This module implements performance benchmark testing for scenarios
 "Qdrant Long-Running Memory Stability" from the test specification.
 """
 
-import psutil
 import subprocess
 import tempfile
 import time
@@ -154,78 +153,6 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
         if search_times:
             avg_search_time = sum(search_times) / len(search_times)
             self.assertLess(avg_search_time, 0.5, "Search should be fast")
-
-import statistics
-import subprocess
-import tempfile
-import threading
-import time
-import unittest
-        request_times = []
-        request_errors = []
-        num_threads = 5
-        requests_per_thread = 10
-
-        def make_concurrent_requests():
-            """Make multiple requests and record timing"""
-            session = requests.Session()
-            for _ in range(requests_per_thread):
-                start_time = time.monotonic()
-                try:
-                    response = session.get("http://localhost:6333/healthz", timeout=5)
-                    request_time = time.monotonic() - start_time
-                    if response.status_code == 200:
-                        request_times.append(request_time)
-                    else:
-                        request_errors.append(response.status_code)
-                except requests.exceptions.RequestException as e:
-                    request_errors.append(str(e))
-            session.close()
-
-        # Run concurrent requests
-        threads = []
-        start_time = time.monotonic()
-
-        for _ in range(num_threads):
-            thread = threading.Thread(target=make_concurrent_requests)
-            thread.start()
-            threads.append(thread)
-
-        for thread in threads:
-            thread.join()
-
-        total_time = time.monotonic() - start_time
-
-        # Analyze results
-        total_requests = num_threads * requests_per_thread
-        successful_requests = len(request_times)
-
-        self.assertGreater(
-            successful_requests, total_requests * 0.9, "Too many failed requests"
-        )
-
-        if request_times:
-            avg_response_time = statistics.mean(request_times)
-            max_response_time = max(request_times)
-
-            self.assertLess(
-                avg_response_time,
-                0.5,
-                f"Average response time {avg_response_time:.3f}s too slow",
-            )
-            self.assertLess(
-                max_response_time,
-                2.0,
-                f"Max response time {max_response_time:.3f}s too slow",
-            )
-
-            print(f"Concurrent performance test:")
-            print(f"  Total requests: {total_requests}")
-            print(f"  Successful: {successful_requests}")
-            print(f"  Errors: {len(request_errors)}")
-            print(f"  Average response time: {avg_response_time:.3f}s")
-            print(f"  Max response time: {max_response_time:.3f}s")
-            print(f"  Total test time: {total_time:.2f}s")
 
 
 if __name__ == "__main__":
