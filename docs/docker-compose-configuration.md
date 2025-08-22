@@ -53,9 +53,9 @@ docker compose --env-file .env.example up -d
 
 1. **CI Error Detection**: `on-failure:3` policy prevents masking of crash
    loops in CI
-2. **Development Convenience**: `unless-stopped` policy keeps services 
+2. **Development Convenience**: `unless-stopped` policy keeps services
    running locally
-3. **Flexibility**: Easy to adjust behavior per environment without code 
+3. **Flexibility**: Easy to adjust behavior per environment without code
    changes
 4. **Debugging**: Failed containers stop after limited retries, making logs
    accessible
