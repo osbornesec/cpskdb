@@ -141,7 +141,7 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
         self.assertEqual(response.status_code, 200)
 
         restart_result = subprocess.run(
-            ["docker", "restart", "test_qdrant_production"],
+            ["docker", "restart", self.QDRANT_CONTAINER_NAME],
             capture_output=True,
         )
         self.assertEqual(restart_result.returncode, 0)
