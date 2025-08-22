@@ -4,9 +4,6 @@ Tests for Qdrant Docker Compose network and configuration edge cases.
 This module implements network, port, volume, and configuration-specific edge cases.
 """
 
-import subprocess
-import time
-
 from tests.test_docker_compose_extended_base import QdrantDockerComposeExtendedTestBase
 
 
