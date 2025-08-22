@@ -91,7 +91,7 @@ services:
 
     def test_error_messages_do_not_expose_sensitive_information(self):
         """Test error messages do not expose sensitive information"""
-        compose_with_secrets = f"""
+        compose_with_secrets = """
 version: '3.8'
 services:
   qdrant:
