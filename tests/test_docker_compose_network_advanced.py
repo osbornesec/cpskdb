@@ -26,6 +26,9 @@ class TestQdrantDockerComposeNetworkAdvanced(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        # Clean up temporary directory
+        if hasattr(self, 'temp_dir') and self.temp_dir:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_network_configuration_errors_handling(self):
         """Test Qdrant network configuration errors with invalid network setups"""
