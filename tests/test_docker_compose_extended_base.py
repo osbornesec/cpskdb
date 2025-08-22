@@ -4,7 +4,6 @@ Base class for extended Docker Compose edge case tests.
 This module provides common functionality for all extended edge case test modules.
 """
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -13,7 +12,7 @@ import unittest
 from pathlib import Path
 from typing import Any, Dict
 
-import requests
+import requests  # type: ignore
 import yaml
 
 
