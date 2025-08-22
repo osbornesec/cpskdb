@@ -263,7 +263,7 @@ Common terms already added:
 ### Repository Info
 
 - **URL**: https://github.com/osbornesec/cpskdb
-- **Owner**: Michael Osborne (michael@allthingsai.life)
+- **Owner**: Michael Osborne (michael [at] allthingsai.life)
 - **Branch**: main
 
 ### Commit Standards
