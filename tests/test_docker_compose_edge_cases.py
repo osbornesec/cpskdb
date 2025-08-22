@@ -102,9 +102,9 @@ services:
                 # Create test collection to verify service works
                 self.create_test_collection("ephemeral_test")
 
-                # Stop and remove container (without volume, data should be lost)
+                # Stop and remove container (with volume cleanup for clean test)
                 subprocess.run(
-                    ["docker", "compose", "-f", str(compose_file), "down"],
+                    ["docker", "compose", "-f", str(compose_file), "down", "-v"],
                     capture_output=True,
                     cwd=temp_dir,
                 )
