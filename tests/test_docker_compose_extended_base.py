@@ -62,7 +62,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                response = requests.get("http://localhost:6333/health", timeout=5)
+                response = requests.get("http://localhost:6333/healthz", timeout=5)
                 if response.status_code == 200:
                     return True
             except requests.RequestException:
