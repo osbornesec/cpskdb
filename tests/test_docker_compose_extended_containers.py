@@ -66,22 +66,22 @@ services:
 
     def test_container_restart_with_data_integrity(self):
         """Test container restart and data integrity edge cases."""
-        config = {
-            "services": {
-                "qdrant": {
-                    "image": "qdrant/qdrant:latest",
-                    "container_name": "qdrant-test",
-                    "ports": ["6333:6333"],
-                    "volumes": [f"{self.temp_dir}/qdrant_data:/qdrant/storage"],
-                    "environment": {
-                        "QDRANT__SERVICE__HTTP_PORT": 6333,
-                        "QDRANT__LOG_LEVEL": "INFO",
-                    },
-                }
-            }
-        }
+        compose_content = f"""
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-test
+    ports:
+      - "6333:6333"
+    volumes:
+      - {self.temp_dir}/qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__LOG_LEVEL=INFO
+"""
 
-        self.create_compose_file(config)
+        self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
@@ -138,22 +138,21 @@ services:
         os.environ["QDRANT_LOG_LEVEL"] = "INFO"
 
         try:
-            config = {
-                "services": {
-                    "qdrant": {
-                        "image": "qdrant/qdrant:latest",
-                        "container_name": "qdrant-test",
-                        "ports": ["${QDRANT_TEST_PORT:-6333}:6333"],
-                        "environment": {
-                            "QDRANT__SERVICE__HTTP_PORT": 6333,
-                            "QDRANT__LOG_LEVEL": "${QDRANT_LOG_LEVEL:-DEBUG}",
-                            "UNDEFINED_VAR": "${UNDEFINED_VAR:-default_value}",
-                        },
-                    }
-                }
-            }
+            compose_content = """
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-test
+    ports:
+      - "${QDRANT_TEST_PORT:-6333}:6333"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__LOG_LEVEL=${QDRANT_LOG_LEVEL:-DEBUG}
+      - UNDEFINED_VAR=${UNDEFINED_VAR:-default_value}
+"""
 
-            self.create_compose_file(config)
+            self.setup_compose_file(compose_content)
             result = self.start_qdrant_service(self.compose_file, self.temp_dir)
             self.assertEqual(result.returncode, 0)
 
