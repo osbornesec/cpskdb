@@ -48,13 +48,16 @@ services:
                     logs_text = logs_result.stdout.lower() + logs_result.stderr.lower()
                     permission_indicators = [
                         "permission",
-                        "denied", 
+                        "denied",
                         "access",
                         "cannot write",
                         "read-only",
                     ]
                     self.assertTrue(
-                        any(indicator in logs_text for indicator in permission_indicators),
+                        any(
+                            indicator in logs_text
+                            for indicator in permission_indicators
+                        ),
                         f"Expected permission errors in logs: {logs_text[:500]}",
                     )
 
@@ -103,17 +106,36 @@ volumes:
                     try:
                         import requests
 
-                        response = requests.get("http://localhost:6333/healthz", timeout=5)
+                        response = requests.get(
+                            "http://localhost:6333/healthz", timeout=5
+                        )
                         if response.status_code != 200:
-                            config_error_indicators = ["invalid", "error", "config", "parse"]
+                            config_error_indicators = [
+                                "invalid",
+                                "error",
+                                "config",
+                                "parse",
+                            ]
                             self.assertTrue(
-                                any(indicator in logs_text for indicator in config_error_indicators),
+                                any(
+                                    indicator in logs_text
+                                    for indicator in config_error_indicators
+                                ),
                                 f"Expected config error handling in logs: {logs_text[:500]}",
                             )
                     except Exception:
-                        config_error_indicators = ["invalid", "error", "config", "parse", "failed"]
+                        config_error_indicators = [
+                            "invalid",
+                            "error",
+                            "config",
+                            "parse",
+                            "failed",
+                        ]
                         self.assertTrue(
-                            any(indicator in logs_text for indicator in config_error_indicators),
+                            any(
+                                indicator in logs_text
+                                for indicator in config_error_indicators
+                            ),
                             f"Expected config error messages: {logs_text[:500]}",
                         )
 
@@ -145,16 +167,44 @@ services:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(result.returncode, 0, f"Docker compose failed: {result.stderr}")
+                self.assertEqual(
+                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
+                )
 
-                self.assertTrue(self.wait_for_qdrant_ready(), "Qdrant service not ready")
+                self.assertTrue(
+                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
+                )
                 self.create_test_collection("recovery_test")
 
                 original_perms = storage_dir.stat().st_mode
                 storage_dir.chmod(0o444)
-                time.sleep(2)
+                
+                # Wait for container to detect permission change
+                start_time = time.monotonic()
+                timeout = 10
+                permission_detected = False
+                while time.monotonic() - start_time < timeout:
+                    # Check if container can detect the permission issue
+                    logs_result = subprocess.run(
+                        ["docker", "logs", "--tail", "20", "qdrant"],
+                        capture_output=True, text=True, cwd=temp_dir
+                    )
+                    if "permission" in logs_result.stdout.lower() or "access" in logs_result.stdout.lower():
+                        permission_detected = True
+                        break
+                    time.sleep(0.5)
+                
                 storage_dir.chmod(original_perms)
-                time.sleep(3)
+                
+                # Wait for container to recover
+                start_time = time.monotonic()
+                while time.monotonic() - start_time < timeout:
+                    try:
+                        if self.wait_for_qdrant_ready():
+                            break
+                    except:
+                        pass
+                    time.sleep(0.5)
 
                 self.assert_qdrant_healthy()
                 self.verify_collection_exists("recovery_test")
