@@ -19,6 +19,11 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 logger = logging.getLogger(__name__)
 
+# Test constants
+VECTOR_DIM = 128
+VECTOR_VAL_A = 0.1
+VECTOR_VAL_B = 0.2
+
 
 class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
     """Test Qdrant development workflow functionality via Docker Compose"""
@@ -32,7 +37,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
-        
+
         # Clean up temporary directory
         if self.temp_dir and os.path.exists(self.temp_dir):
             try:
