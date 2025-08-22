@@ -108,15 +108,12 @@ volumes:
         """Test startup order with health check dependencies"""
         compose_with_health = """
 version: '3.8'
-
 services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: test_qdrant_health
     ports:
       - "6333:6333"
-    environment:
-      - QDRANT__LOG_LEVEL=INFO
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:6333/healthz"]
       interval: 5s
@@ -124,21 +121,18 @@ services:
       retries: 3
     volumes:
       - qdrant_data:/qdrant/storage
-
   dependent-service:
     image: alpine:latest
     container_name: test_dependent_health
-    command: echo "Service started after Qdrant health check"
+    command: echo "Service started after health check"
     depends_on:
       qdrant:
         condition: service_healthy
-
 volumes:
   qdrant_data:
 """
 
         self.compose_file = self.setup_compose_file(compose_with_health, self.temp_dir)
-
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
