@@ -51,7 +51,7 @@ volumes:
                 text=True,
                 cwd=temp_dir,
             )
-            
+
             if result.returncode == 0:
                 ready = self.wait_for_qdrant_ready()
                 if ready:
@@ -78,6 +78,7 @@ volumes:
 
             # Test concurrent connections
             import threading
+
             connection_results = []
 
             def make_request():
@@ -97,7 +98,9 @@ volumes:
                 thread.join()
 
             success_rate = sum(connection_results) / len(connection_results)
-            self.assertGreater(success_rate, 0.8, "Should handle concurrent connections")
+            self.assertGreater(
+                success_rate, 0.8, "Should handle concurrent connections"
+            )
         finally:
             self.stop_qdrant_service(compose_file, temp_dir)
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -124,11 +127,9 @@ volumes:
             # Insert batch of vectors
             vectors = []
             for i in range(100):
-                vectors.append({
-                    "id": i,
-                    "vector": [0.1 * (i % 10)] * 128,
-                    "payload": {"index": i}
-                })
+                vectors.append(
+                    {"id": i, "vector": [0.1 * (i % 10)] * 128, "payload": {"index": i}}
+                )
 
             batch_data = {"points": vectors}
             upsert_response = requests.put(
@@ -164,7 +165,14 @@ volumes:
 
             # Check container stats
             stats_result = subprocess.run(
-                ["docker", "stats", "test_qdrant_production", "--no-stream", "--format", "table"],
+                [
+                    "docker",
+                    "stats",
+                    "test_qdrant_production",
+                    "--no-stream",
+                    "--format",
+                    "table",
+                ],
                 capture_output=True,
                 text=True,
             )
