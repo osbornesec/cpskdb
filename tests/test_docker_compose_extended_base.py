@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any, Dict
 
 import requests  # type: ignore
-import yaml
 
 
 class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
