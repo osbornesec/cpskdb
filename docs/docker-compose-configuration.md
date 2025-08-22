@@ -65,7 +65,7 @@ docker compose --env-file .env.example up -d
 If you encounter issues with containers restarting:
 
 1. **Check logs**: `docker compose logs qdrant`
-2. **Verify environment**: `docker compose config` shows resolved 
+2. **Verify environment**: `docker compose config` shows resolved
    configuration
 3. **Adjust retry count**: Change `on-failure:3` to `on-failure:1` for faster
    failure detection
