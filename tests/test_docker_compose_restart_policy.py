@@ -28,6 +28,23 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
+    def get_container_restart_count(self, container_name):
+        """Get the restart count for a container."""
+        try:
+            result = subprocess.run(
+                ["docker", "inspect", container_name, "--format={{.RestartCount}}"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                try:
+                    return int(result.stdout.strip())
+                except ValueError:
+                    return None
+            return None
+        except Exception:
+            return None
+
     def test_container_restarts_after_unexpected_exit(self):
         """Test container automatically restarts when it exits unexpectedly"""
         compose_content = self.create_production_compose_content()
@@ -150,6 +167,12 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
             timeout=10,
         )
         self.assertEqual(points_response.status_code, 200)
+        points_data = points_response.json()
+        self.assertEqual(len(points_data.get("result", {}).get("points", [])), 2)
+        # Verify the point IDs are preserved
+        point_ids = [p["id"] for p in points_data.get("result", {}).get("points", [])]
+        self.assertIn(1, point_ids)
+        self.assertIn(2, point_ids)
 
     def test_restart_policy_configuration(self):
         """Test that restart policy is properly configured in compose"""
