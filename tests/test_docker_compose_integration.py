@@ -5,6 +5,7 @@ Integration and interaction tests for Qdrant Docker Compose configuration
 import subprocess
 import tempfile
 import time
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: ignore
 
