@@ -94,12 +94,13 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
 
         start_time = time.time()
         while time.time() - start_time < timeout:
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.bind(("localhost", port))
-                return True
-            except OSError:
-                time.sleep(0.5)
+            # Try to connect to see if port is in use
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex(("localhost", port))
+                if result != 0:  # Connection failed, port is available
+                    return True
+            time.sleep(0.5)
         return False
 
     def force_cleanup_containers(self) -> None:
