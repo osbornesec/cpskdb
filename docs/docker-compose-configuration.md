@@ -7,7 +7,7 @@ for different environments.
 
 ### Restart Policy Configuration
 
-The Qdrant service restart policy can be configured via the 
+The Qdrant service restart policy can be configured via the
 `QDRANT_RESTART_POLICY` environment variable:
 
 | Environment | Policy | Description |
