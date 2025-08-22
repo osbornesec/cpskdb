@@ -109,7 +109,7 @@ volumes:
         """Assert that Qdrant service is healthy"""
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
-        
+
         # Handle both JSON and plain text responses
         try:
             json_data = response.json()
@@ -117,14 +117,17 @@ volumes:
                 self.assertIn(json_data.get("status"), ["ok", "healthy"])
             else:
                 # Check for any truthy health indicator
-                self.assertTrue(any(json_data.values()), "Health check JSON should contain truthy values")
+                self.assertTrue(
+                    any(json_data.values()),
+                    "Health check JSON should contain truthy values",
+                )
         except (ValueError, requests.exceptions.JSONDecodeError):
             # Fallback to text response - check for common health indicators
             response_text = response.text.lower()
             health_indicators = ["ok", "health", "ready"]
             self.assertTrue(
                 any(indicator in response_text for indicator in health_indicators),
-                f"Health check response should contain health indicators. Got: {response.text[:100]}"
+                f"Health check response should contain health indicators. Got: {response.text[:100]}",
             )
 
     def create_test_collection(self, collection_name="test_collection", vector_size=4):
@@ -173,13 +176,14 @@ volumes:
         """Measure container startup time using time.monotonic()"""
         start_time = time.monotonic()
         result = self.start_qdrant_service(compose_file, temp_dir)
-        if result.returncode == 0:
-            # Wait for service to be ready
-            ready = self.wait_for_qdrant_ready(timeout=60)
-            end_time = time.monotonic()
-            startup_time = end_time - start_time
-            return startup_time, ready
-        return None, False
+        if result.returncode != 0:
+            return None, False
+            
+        # Wait for service to be ready
+        ready = self.wait_for_qdrant_ready(timeout=60)
+        end_time = time.monotonic()
+        startup_time = end_time - start_time
+        return startup_time, ready
 
     def measure_api_latency(self, endpoint="/healthz", num_requests=5):
         """Measure average API response times"""
