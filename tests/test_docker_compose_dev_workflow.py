@@ -110,7 +110,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
             "points": [
                 {
                     "id": 1,
-                    "vector": [0.1] * 128,
+                    "vector": [VECTOR_VAL_A] * VECTOR_DIM,
                     "payload": {"text": "First document"},
                 },
                 {
