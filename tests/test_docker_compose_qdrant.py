@@ -6,7 +6,6 @@ Following TDD methodology for Task 99 - Configure Qdrant service (port 6333)
 import subprocess
 import tempfile
 import time
-import unittest
 from pathlib import Path
 
 import requests  # type: ignore
