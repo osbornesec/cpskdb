@@ -33,13 +33,13 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             )
         except Exception:
             pass
-        
+
         # Force cleanup any remaining containers
         self.force_cleanup_containers()
-        
+
         # Wait for port to be available
         self.wait_for_port_available()
-        
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def create_compose_file_from_dict(self, config: Dict[str, Any]) -> None:
@@ -104,8 +104,6 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
 
     def force_cleanup_containers(self) -> None:
         """Force cleanup any remaining containers on port 6333."""
-        import subprocess
-
         # Stop any containers using port 6333
         try:
             result = subprocess.run(
