@@ -30,7 +30,6 @@ class TestQdrantDockerComposeNetworkAdvanced(QdrantDockerComposeTestBase):
 
     def test_network_configuration_errors_handling(self):
         """Test Qdrant network configuration errors with invalid network setups"""
-        # Test with non-existent network
         compose_content_invalid_network = """
 version: '3.8'
 services:
@@ -74,31 +73,25 @@ volumes:
 
     def test_accessible_from_host_development_environment(self):
         """Test Qdrant accessible from host development environment scenario"""
-        # Setup with production network configuration
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
-        # Wait for service to be ready
         self.assertTrue(self.wait_for_qdrant_ready())
 
         # Test accessibility from host environment
-        # 1. Health check from host
         health_response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(health_response.status_code, 200)
 
-        # 2. API endpoints accessible from host
         api_response = requests.get("http://localhost:6333/", timeout=10)
         self.assertEqual(api_response.status_code, 200)
 
-        # 3. Collections endpoint accessible
         collections_response = requests.get(
             "http://localhost:6333/collections", timeout=10
         )
         self.assertEqual(collections_response.status_code, 200)
 
-        # 4. Can perform operations from host
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
         create_response = requests.put(
             "http://localhost:6333/collections/host_access_test",
@@ -109,7 +102,6 @@ volumes:
 
     def test_custom_network_driver_configurations(self):
         """Test custom network driver configurations"""
-        # Test with bridge driver and custom configuration
         compose_content_custom_bridge = """
 version: '3.8'
 
@@ -148,10 +140,8 @@ volumes:
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
-        # Should be accessible through custom network
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        # Verify custom network configuration
         inspect_result = subprocess.run(
             [
                 "docker",
@@ -170,7 +160,6 @@ volumes:
 
     def test_ipv6_network_configuration_support(self):
         """Test IPv6 network configuration support if available"""
-        # Test with IPv6 enabled network (if supported)
         compose_content_ipv6 = """
 version: '3.8'
 
@@ -201,7 +190,6 @@ volumes:
 
         self.compose_file = self.setup_compose_file(compose_content_ipv6, self.temp_dir)
 
-        # Try to start with IPv6 configuration
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
@@ -209,21 +197,16 @@ volumes:
             cwd=self.temp_dir,
         )
 
-        # IPv6 may not be supported in all environments
         if result.returncode == 0:
-            # If IPv6 works, service should be accessible
             ready = self.wait_for_qdrant_ready(timeout=30)
             if ready:
                 response = requests.get("http://localhost:6333/healthz", timeout=10)
                 self.assertEqual(response.status_code, 200)
         else:
-            # IPv6 failure is acceptable in many environments
             error_output = result.stderr + result.stdout
-            # Should be IPv6-related error, not application error
             ipv6_related = any(
                 term in error_output.lower()
                 for term in ["ipv6", "inet6", "network", "subnet"]
             )
             if not ipv6_related:
-                # If not IPv6-related, something else is wrong
                 self.fail(f"Unexpected error (not IPv6-related): {error_output}")
