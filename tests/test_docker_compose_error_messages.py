@@ -74,13 +74,6 @@ volumes:
                 f"Error message should mention port issue: {error_output}",
             )
 
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:6333/invalid_health_endpoint || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 2
-      start_period: 5s
-
     def test_network_configuration_error_messages(self):
         """Test network configuration error messages identify the specific issue"""
         # Test with conflicting network configuration
