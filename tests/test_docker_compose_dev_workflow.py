@@ -98,7 +98,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         self.assertEqual(result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        collection_config = {"vectors": {"size": 128, "distance": "Cosine"}}
+        collection_config = {"vectors": {"size": VECTOR_DIM, "distance": "Cosine"}}
         create_response = requests.put(
             "http://localhost:6333/collections/workflow_test",
             json=collection_config,
