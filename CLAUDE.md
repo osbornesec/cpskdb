@@ -274,7 +274,7 @@ Common terms already added:
 
 <body>
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+🤖 Generated with AI assistance
 ```
 
 **Types**: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
