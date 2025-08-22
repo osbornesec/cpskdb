@@ -412,7 +412,10 @@ Location: `.claude/memories/`
 
 ### Docker Compose Services
 
+**Current (default compose):**
 - **Qdrant** (port 6333): Vector database with persistence
+
+**Full Stack (optional/future):**
 - **PostgreSQL** (port 5432): Metadata and audit logs
 - **Redis** (port 6379): Caching and session storage
 - **Ollama** (port 11434): Local LLM inference
