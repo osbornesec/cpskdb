@@ -118,8 +118,6 @@ services:
                 )
 
                 # Collection should be gone since no volume persistence
-                import requests  # type: ignore
-
                 get_response = requests.get(
                     "http://localhost:6333/collections/ephemeral_test", timeout=10
                 )
