@@ -5,12 +5,11 @@ This module implements comprehensive snapshots volume testing that addresses
 the "Qdrant Snapshots Volume Mounts Correctly" scenario from the test specification.
 """
 
-import shutil
 import subprocess
 import tempfile
 import unittest
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
