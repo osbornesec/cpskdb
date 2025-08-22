@@ -119,3 +119,23 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
                     subprocess.run(["docker", "rm", name], capture_output=True)
         except Exception:
             pass
+
+    def get_container_restart_count(self, container_name: str) -> int:
+        """Get the restart count for a specific container."""
+        try:
+            result = subprocess.run(
+                [
+                    "docker",
+                    "inspect",
+                    container_name,
+                    "--format={{.RestartCount}}"
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                restart_count = result.stdout.strip()
+                return int(restart_count) if restart_count.isdigit() else 0
+            return 0
+        except Exception:
+            return 0
