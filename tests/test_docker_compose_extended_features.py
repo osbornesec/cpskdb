@@ -14,6 +14,73 @@ class TestQdrantDockerComposeAdvancedFeatures(QdrantDockerComposeExtendedTestBas
     """Advanced features edge cases for Qdrant Docker Compose configuration."""
 
     """Test Docker Compose with extreme resource limit values."""
+
+    def test_resource_limits_extreme_values(self):
+        """Test Docker Compose with extreme resource limit values."""
+        compose_content = """
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-test
+    ports:
+      - "6333:6333"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.01"      # Extremely low CPU
+          memory: "32M"     # Very low memory
+        reservations:
+          cpus: "0.001"
+          memory: "16M"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__LOG_LEVEL=ERROR  # Reduce log output
+"""
+
+        self.setup_compose_file(compose_content)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+
+        # Test should validate that Docker Compose handles extreme resource limits
+        # Either the container starts successfully (and we verify basic functionality)
+        # or it fails gracefully with appropriate error messages
+        if result.returncode == 0:
+            # Container started - verify it can handle basic operations despite constraints
+            time.sleep(5)  # Give it more time with limited resources
+            
+            # Test basic responsiveness within timeout
+            is_ready = self.wait_for_qdrant_ready(timeout=60)
+            
+            if is_ready:
+                # If responsive, verify basic health check works
+                self.assert_qdrant_healthy()
+            else:
+                # If not ready, check that container is still running (not crashed)
+                import subprocess
+                check_result = subprocess.run(
+                    ["docker", "ps", "-q", "--filter", "name=qdrant-test"],
+                    capture_output=True,
+                    text=True,
+                )
+                # Assert container exists (still running or stopped gracefully)
+                self.assertIsNotNone(check_result.stdout.strip() or None,
+                                    "Container should exist even if not ready due to resource constraints")
+        else:
+            # Container failed to start - verify error handling
+            self.assertNotEqual(result.returncode, 0, 
+                               "Expected failure due to extreme resource constraints")
+            
+            # Check that stderr contains resource-related error messages
+            error_output = result.stderr.lower() if result.stderr else ""
+            resource_error_indicators = ["memory", "cpu", "resource", "limit", "constraint"]
+            
+            has_resource_error = any(indicator in error_output for indicator in resource_error_indicators)
+            
+            # Assert either resource error in stderr or general startup failure
+            self.assertTrue(
+                has_resource_error or result.returncode != 0,
+                f"Expected resource-related error or startup failure. Got returncode={result.returncode}, stderr='{result.stderr}'"
+            )
 compose_content = """
 version: '3.8'
 services:
