@@ -54,8 +54,6 @@ volumes:
                 self.assert_qdrant_healthy()
 
                 # Verify service info endpoint works
-                import requests  # type: ignore
-
                 info_response = requests.get("http://localhost:6333/", timeout=10)
                 self.assertEqual(info_response.status_code, 200)
                 service_info = info_response.json()
