@@ -11,8 +11,10 @@ from pathlib import Path
 
 import requests  # type: ignore
 
+from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
-class TestQdrantDockerCompose(unittest.TestCase):
+
+class TestQdrantDockerCompose(QdrantDockerComposeTestBase):
     """Test cases for Qdrant service Docker Compose configuration"""
 
     def test_qdrant_service_starts_successfully(self):
