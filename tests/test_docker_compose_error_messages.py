@@ -206,7 +206,7 @@ volumes:
         self.compose_file = self.setup_compose_file(compose_content_startup_fail, self.temp_dir)
         
         # Try to start service
-        result = subprocess.run(
+        subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
             text=True,
