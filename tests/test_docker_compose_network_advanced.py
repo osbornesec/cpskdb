@@ -5,10 +5,11 @@ This module implements advanced network testing scenarios including network
 isolation, custom configurations, and complex topologies.
 """
 
+import shutil
 import subprocess
 import tempfile
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
