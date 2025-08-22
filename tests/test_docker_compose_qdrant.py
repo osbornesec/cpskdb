@@ -169,7 +169,7 @@ volumes:
                     capture_output=True,
                     cwd=temp_dir,
                 )
-                time.sleep(5)
+                self.wait_for_qdrant_ready()
 
                 get_response = requests.get(
                     "http://localhost:6333/collections/test_collection", timeout=10
