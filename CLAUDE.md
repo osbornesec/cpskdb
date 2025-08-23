@@ -92,6 +92,12 @@ cpskdb/
 ### Environment Setup
 
 ```bash
+# Set up development environment
+make install                # Create virtual environment and install dependencies
+
+# Set up pre-commit hooks (recommended)
+make pre-commit-install     # Install git hooks for code quality
+
 # Copy the example environment file
 cp .env.example .env
 
@@ -143,6 +149,10 @@ ruff format .               # Code formatting
 ruff check .               # Linting
 mypy src/                  # Type checking
 npx markdownlint-cli2 "**/*.md"  # Documentation
+
+# Pre-commit hooks (after setting up dev environment)
+make pre-commit-install     # Install git hooks (or: pre-commit install)
+make pre-commit-run         # Run hooks on all files (or: pre-commit run --all-files)
 ```
 
 ---

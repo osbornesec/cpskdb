@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=61.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cpskdb"
+version = "0.1.0"
+description = "Agentic RAG system for multi-product technical data with high accuracy, auditability, and data privacy"
+requires-python = ">=3.11"
+authors = [
+    {name = "CPSKDB Maintainers", email = "maintainers@cpskdb.example.com"},
+]
+license = {text = "MIT"}
+readme = "README.md"
+keywords = ["rag", "ai", "vector-database", "fastapi", "langgraph", "qdrant"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    # Core Framework
+    "fastapi[standard]>=0.113.0,<0.116.0",
+    "pydantic>=2.7.0,<3.0.0",
+    
+    # AI/ML Orchestration
+    "langgraph>=0.3.27",
+    "langchain>=0.2.0",
+    "langchain-core>=0.2.38",
+    
+    # Vector Database
+    "qdrant-client[fastembed]>=1.7.0",
+    
+    # LLM/Embedding Providers
+    "voyageai>=0.3.2",
+    "cohere>=5.15.0",
+    
+    # HTTP Client & Server
+    "httpx[http2]>=0.25.0",
+    "uvicorn[standard]>=0.26.0",
+    
+    # Configuration Management
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
+]
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=4.0.0,<5.0.0",
+    "ruff>=0.1.0,<0.2.0",
+    "mypy>=1.8.0,<2.0.0",
+    "black>=23.0.0,<24.0.0",
+    "pre-commit>=3.6.0,<4.0.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings  
+    "F",     # Pyflakes
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "I",     # isort
+    "N",     # pep8-naming
+    "ASYNC", # flake8-async
+    "S",     # flake8-bandit (security)
+    "C90",   # mccabe complexity
+]
+
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]  # Allow assert statements in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+disallow_untyped_defs = true
+strict_optional = true
+check_untyped_defs = true
+disallow_any_generics = true
+warn_redundant_casts = true
+warn_unused_ignores = true
