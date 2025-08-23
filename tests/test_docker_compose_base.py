@@ -97,7 +97,7 @@ volumes:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                response = requests.get("http://localhost:6333/healthz", timeout=5)
+                response = requests.get("http://localhost:6333/healthz", timeout=1)
                 if response.status_code == 200:
                     return True
             except requests.exceptions.RequestException:
@@ -173,15 +173,15 @@ volumes:
         return list(snapshots_path.glob("*.snapshot"))
 
     def measure_startup_time(self, compose_file, temp_dir):
-        """Measure container startup time using time.monotonic()"""
-        start_time = time.monotonic()
+        """Measure container startup time using time.perf_counter()"""
+        start_time = time.perf_counter()
         result = self.start_qdrant_service(compose_file, temp_dir)
         if result.returncode != 0:
             return None, False
-            
+
         # Wait for service to be ready
         ready = self.wait_for_qdrant_ready(timeout=60)
-        end_time = time.monotonic()
+        end_time = time.perf_counter()
         startup_time = end_time - start_time
         return startup_time, ready
 
@@ -189,10 +189,10 @@ volumes:
         """Measure average API response times"""
         latencies = []
         for _ in range(num_requests):
-            start_time = time.monotonic()
+            start_time = time.perf_counter()
             try:
                 response = requests.get(f"http://localhost:6333{endpoint}", timeout=10)
-                end_time = time.monotonic()
+                end_time = time.perf_counter()
                 if response.status_code in [
                     200,
                     404,

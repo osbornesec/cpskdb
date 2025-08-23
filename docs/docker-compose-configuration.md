@@ -14,7 +14,23 @@ The Qdrant service restart policy can be configured via the
 |-------------|--------|-------------|
 | **Local/Dev** | `unless-stopped` (default) | Service restarts automatically unless manually stopped. Good for development where you want persistent services. |
 | **CI/Testing** | `on-failure:3` | Service restarts up to 3 times on failure, then stops. Prevents infinite crash loops and surfaces errors quickly in CI. |
-| **Production** | `unless-stopped` or `on-failure:5` | Choose based on requirements. `unless-stopped` for high availability, `on-failure:N` for controlled failure handling. |
+| **Production** | `unless-stopped` or `on-failure:5` | Choose based on your operational posture. Use `unless-stopped` for high-availability setups where services are supervised by external process managers (like systemd or a container orchestrator). Use `on-failure:N` when you want crash loops to stop and trigger alerts for manual intervention; choose N based on your tolerance for transient failures. |
+
+### Image Pinning
+
+Pin the QDRANT_IMAGE to avoid drift and ensure reproducible deployments:
+
+**Tagged Pin Example:**
+```bash
+QDRANT_IMAGE=qdrant/qdrant:1.8.2
+```
+
+**Digest Pin Example (Preferred):**
+```bash
+QDRANT_IMAGE=qdrant/qdrant@sha256:abc123def456...
+```
+
+**Note:** Avoid using `latest` in CI/Production to prevent non-reproducible upgrades.
 
 ### Usage Examples
 
@@ -35,12 +51,29 @@ docker compose up -d
 
 #### Using Environment Files
 
-```bash
-# For CI
-docker compose --env-file .env.ci up -d
+Environment files allow you to manage configuration for different environments separately. Docker Compose automatically picks up a `.env` file in the project root.
 
-# For local development
-docker compose --env-file .env.example up -d
+**Example `.env` file:**
+```
+# .env
+# Local development settings
+QDRANT_IMAGE=qdrant/qdrant:latest
+QDRANT_RESTART_POLICY=unless-stopped
+```
+
+You can also specify a different environment file, which is useful for CI or other environments.
+
+**CI Usage Example:**
+```bash
+# .env.ci
+# CI-specific settings
+QDRANT_IMAGE=qdrant/qdrant:1.9.0
+QDRANT_RESTART_POLICY=on-failure:3
+```
+
+To use the CI-specific file, invoke Docker Compose with the `--env-file` flag:
+```bash
+docker compose --env-file ./.env.ci up -d
 ```
 
 ### Configuration Files

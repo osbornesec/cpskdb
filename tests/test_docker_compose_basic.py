@@ -175,27 +175,24 @@ volumes:
                 self.assertEqual(logs_result.returncode, 0)
                 logs_text = logs_result.stdout.lower()
 
-                # Check for specific Qdrant debug-level indicators
-                qdrant_debug_indicators = [
-                    "debug",
-                    "trace", 
-                    "qdrant debug",
+                # Require evidence of DEBUG logging when QDRANT__LOG_LEVEL=DEBUG
+                debug_indicators = [
                     "log level: debug",
                     "[debug]",
-                    "debug mode"
+                    "level=debug",
+                    " debug ",
                 ]
-                found_debug = any(indicator in logs_text for indicator in qdrant_debug_indicators)
-                
-                # If no specific debug indicators found, check for general startup with debug info
-                if not found_debug:
-                    general_indicators = ["starting", "initialized", "ready", "listening"]
-                    found_startup = any(indicator in logs_text for indicator in general_indicators)
-                    self.assertTrue(
-                        found_startup,
-                        f"No debug or startup logs found in: {logs_text[:500]}"
-                    )
-                else:
-                    self.assertTrue(found_debug, f"Debug logs not found in: {logs_text[:500]}")
+                found_debug = any(ind in logs_text for ind in debug_indicators)
+                self.assertTrue(
+                    found_debug,
+                    f"Expected DEBUG indicators {debug_indicators} in logs but none were found. Logs: {logs_text[:800]}"
+                )
 
+                # Optional: also ensure service reached a ready/running state
+                startup_indicators = ["starting", "initialized", "ready", "listening", "qdrant"]
+                self.assertTrue(
+                    any(ind in logs_text for ind in startup_indicators),
+                    f"Expected startup indicators {startup_indicators} in logs. Logs: {logs_text[:800]}"
+                )
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

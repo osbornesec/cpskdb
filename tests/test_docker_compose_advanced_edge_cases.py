@@ -7,7 +7,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: ignore
+from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeAdvancedEdgeCases(QdrantDockerComposeTestBase):
@@ -123,12 +123,11 @@ volumes:
                                 ),
                                 f"Expected config error handling in logs: {logs_text[:500]}",
                             )
-                    except requests.exceptions.Timeout as e:
-                        # HTTP timeout occurred
-                        self.fail(f"HTTP request timed out after 5s to http://localhost:6333/healthz: {e}")
                     except requests.exceptions.RequestException as e:
-                        # Other HTTP-related errors
-                        self.fail(f"HTTP request failed to http://localhost:6333/healthz: {e}")
+                        # All HTTP-related errors including timeouts
+                        self.fail(
+                            f"HTTP request to http://localhost:6333/healthz failed: {e}"
+                        )
                     except Exception:
                         config_error_indicators = [
                             "invalid",
@@ -191,7 +190,7 @@ services:
                 while time.monotonic() - start_time < timeout:
                     # Check if container can detect the permission issue
                     logs_result = subprocess.run(
-                        ["docker", "logs", "--tail", "20", "qdrant"],
+                        ["docker", "logs", "--tail", "20", "test_qdrant_storage_recovery"],
                         capture_output=True,
                         text=True,
                         cwd=temp_dir,

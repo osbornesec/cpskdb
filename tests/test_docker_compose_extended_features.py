@@ -36,19 +36,17 @@ services:
       - QDRANT__LOG_LEVEL=ERROR  # Reduce log output
 """
 
-        self.setup_compose_file(compose_content)
+        self.compose_file = self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
 
-        # Test should validate that Docker Compose handles extreme resource limits
-        # Either the container starts successfully (and we verify basic functionality)
-        # or it fails gracefully with appropriate error messages
+        # Test that Docker Compose handles extreme resource limits gracefully
         if result.returncode == 0:
             # Container started - verify it can handle basic operations despite constraints
             time.sleep(5)  # Give it more time with limited resources
-            
+
             # Test basic responsiveness within timeout
             is_ready = self.wait_for_qdrant_ready(timeout=60)
-            
+
             if is_ready:
                 # If responsive, verify basic health check works
                 self.assert_qdrant_healthy()
@@ -58,25 +56,32 @@ services:
                     ["docker", "ps", "-q", "--filter", "name=qdrant-test"],
                     capture_output=True,
                     text=True,
+                    timeout=30,
                 )
                 # Assert container exists (still running or stopped gracefully)
-                self.assertIsNotNone(check_result.stdout.strip() or None,
-                                    "Container should exist even if not ready due to resource constraints")
+                self.assertIsNotNone(
+                    check_result.stdout.strip() or None,
+                    "Container should exist even if not ready due to resource constraints",
+                )
         else:
-            # Container failed to start - verify error handling
-            self.assertNotEqual(result.returncode, 0, 
-                               "Expected failure due to extreme resource constraints")
-            
             # Check that stderr contains resource-related error messages
             error_output = result.stderr.lower() if result.stderr else ""
-            resource_error_indicators = ["memory", "cpu", "resource", "limit", "constraint"]
-            
-            has_resource_error = any(indicator in error_output for indicator in resource_error_indicators)
-            
-            # Assert either resource error in stderr or general startup failure
+            resource_error_indicators = [
+                "memory",
+                "cpu",
+                "resource",
+                "limit",
+                "constraint",
+            ]
+
+            has_resource_error = any(
+                indicator in error_output for indicator in resource_error_indicators
+            )
+
+            # Assert resource error is present in stderr for failed startup
             self.assertTrue(
-                has_resource_error or result.returncode != 0,
-                f"Expected resource-related error or startup failure. Got returncode={result.returncode}, stderr='{result.stderr}'"
+                has_resource_error,
+                f"Expected resource-related error in stderr. Got: '{result.stderr}'",
             )
 
     def test_docker_compose_profiles_edge_cases(self):
@@ -108,7 +113,7 @@ services:
       - QDRANT__LOG_LEVEL=DEBUG
 """
 
-        self.setup_compose_file(compose_content)
+        self.compose_file = self.setup_compose_file(compose_content)
 
         # Start with specific profile
         result = subprocess.run(
@@ -124,6 +129,7 @@ services:
             ],
             capture_output=True,
             cwd=self.temp_dir,
+            timeout=30,
         )
         self.assertEqual(result.returncode, 0)
 
@@ -140,17 +146,14 @@ services:
     ports:
       - "6333:6333"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
       interval: 1s       # Very frequent checks
       timeout: 1s        # Very short timeout
       retries: 1         # Only one retry
       start_period: 1s   # Very short start period
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__LOG_LEVEL=INFO
 """
 
-        self.setup_compose_file(compose_content)
+        self.compose_file = self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
@@ -168,6 +171,7 @@ services:
             ],
             capture_output=True,
             text=True,
+            timeout=30,
         )
 
         if health_result.returncode == 0:
@@ -201,7 +205,7 @@ services:
       - QDRANT__LOG_LEVEL=INFO
 """
 
-        self.setup_compose_file(compose_content)
+        self.compose_file = self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 

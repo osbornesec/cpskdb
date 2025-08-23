@@ -29,6 +29,7 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
         # Clean up temporary directory
         if hasattr(self, "temp_dir") and self.temp_dir:
             import shutil
+
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_snapshots_volume_mounts_correctly(self):
@@ -43,7 +44,7 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
 
-        # Verify volume mount exists in container
+        # Verify volume mount exists
         inspect_result = subprocess.run(
             ["docker", "inspect", "test_qdrant_production", "--format={{.Mounts}}"],
             capture_output=True,
@@ -52,8 +53,11 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
 
         if inspect_result.returncode == 0:
             mounts_info = inspect_result.stdout
-            self.assertIn("qdrant", mounts_info.lower())
-
+            # More specific check for actual volume mounts
+            self.assertTrue(
+                "qdrant_data" in mounts_info or "/qdrant/storage" in mounts_info,
+                f"Expected Qdrant volume mount not found in: {mounts_info}"
+            )
     def test_snapshot_creation_via_api(self):
         """Test snapshot creation via API"""
         compose_content = self.create_production_compose_content()
@@ -77,18 +81,33 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
             timeout=30,
         )
 
-        # Snapshot creation may or may not be supported depending on configuration
-        self.assertIn(snapshot_response.status_code, [200, 201, 404, 405])
+        # Snapshot creation response varies based on Qdrant configuration:
+        # 200/201: Snapshot created successfully
+        # 404: Collection not found (rare edge case)
+        # 405: Snapshots not enabled in current configuration
+        expected_codes = [200, 201, 404, 405]
+        self.assertIn(
+            snapshot_response.status_code,
+            expected_codes,
+            f"Unexpected response code {snapshot_response.status_code}. Response: {snapshot_response.text}"
+        )
 
-    def test_snapshot_files_persist_after_restart(self):
-        """Test snapshot files persist after restart"""
+    def test_start_qdrant_service(self):
+        """Test starting qdrant service"""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        # Create a collection and add data
+    def test_snapshot_persistence_across_restarts(self):
+        """Test snapshot persistence across restarts"""
+        compose_content = self.create_production_compose_content()
+        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
+        result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(self.wait_for_qdrant_ready())
+
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
         create_response = requests.put(
             "http://localhost:6333/collections/persist_snapshot_test",
@@ -111,13 +130,10 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
         self.assertIn(upsert_response.status_code, [200, 201])
 
         # Restart the service
-        restart_result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "restart"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-        self.assertEqual(restart_result.returncode, 0)
+        # Stop and start to ensure clean restart
+        self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        start_result = self.start_qdrant_service(self.compose_file, self.temp_dir)
+        self.assertEqual(start_result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
 
         # Verify data persisted

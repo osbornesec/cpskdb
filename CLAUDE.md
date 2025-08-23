@@ -20,6 +20,21 @@ graph LR
     A[Documents] --> B[Parse & Chunk] --> C[Embed] --> D[Qdrant]
     E[Query] --> F[Intent Analysis] --> G[Agent Router] --> H[Vector Search]
     H --> I[Rerank] --> J[Synthesize] --> K[Validate] --> L[Response]
+    
+    %% Error paths and fallback handling
+    B --> M[Error Handler]
+    C --> M
+    F --> M
+    H --> M
+    I --> M
+    J --> M
+    K --> M
+    M --> N[Fallback Response]
+    
+    %% Component failure states
+    D -.->|DB Error| M
+    G -.->|Routing Error| M
+    K -.->|Validation Failed| M
 ```
 
 ### Multi-Agent Framework (LangGraph)
@@ -36,9 +51,9 @@ graph LR
 Infrastructure:
   api: FastAPI (async)
   vector_db: Qdrant (port 6333)
-  metadata: PostgreSQL (port 5432)
-  cache: Redis (port 6379)
-  llm: Ollama (port 11434)
+  metadata: PostgreSQL (port 5432) # optional/future: not in current compose
+  cache: Redis (port 6379) # optional/future: not in current compose
+  llm: Ollama (port 11434) # optional/future: not in current compose
 
 AI_ML:
   orchestration: LangGraph
@@ -77,23 +92,14 @@ cpskdb/
 ### Environment Setup
 
 ```bash
-# Required variables
-export POSTGRES_URL="postgresql://user:pass@localhost:5432/cpskdb"
-export QDRANT_HOST="localhost"
-export VOYAGE_API_KEY="your_key"
-export COHERE_API_KEY="your_key"
+# Copy the example environment file
+cp .env.example .env
 
-# Optional: Configure restart policy for different environments
-# Local/Dev (default): unless-stopped
-# CI/Testing: on-failure:3 (limits retries, surfaces errors quickly)
-export QDRANT_RESTART_POLICY=unless-stopped  # or on-failure:3 for CI
+# Start the Qdrant service
+docker compose up -d qdrant
 
-# Start infrastructure services (Qdrant vector database)
-docker compose up -d
-
-# Run application locally for development
-# Note: This runs the app on the host, not in a container
-uvicorn src.api.main:app --reload --port 8000
+# Verify the service is running
+curl http://localhost:6333/healthz
 ```
 
 ### API Endpoints
@@ -119,12 +125,9 @@ System:
 
 ### Research-First Development
 
-**Always use before coding**:
+**Always research before coding**:
 
-```bash
-# Before ANY coding
-@agent-context7-docs-searcher "Research [topic/library/pattern]"
-```
+Before writing any code, it is important to research the topic, library, or pattern you will be working with. Use web search, official documentation, or community resources to gather information.
 
 ### Test-Driven Development
 
@@ -151,14 +154,14 @@ npx markdownlint-cli2 "**/*.md"  # Documentation
 **Objective**: Complete all 87 comprehensive test scenarios for Qdrant
 service configuration
 
-**Progress**: 32/87 scenarios implemented
+**Progress**: 32 unique scenarios implemented (115 total category assignments)
 
 - ✅ Basic functionality (7 scenarios)
 - ✅ Performance & resource (14 scenarios)  
 - ✅ Security & validation (12 scenarios)
-- ✅ Advanced integration (15 scenarios)
-- ✅ State management (18 scenarios)
-- ✅ Recovery & resilience (14 scenarios)
+- 🔄 Advanced integration (15 scenarios) - IN PROGRESS
+- 🔄 State management (18 scenarios) - IN PROGRESS
+- 🔄 Recovery & resilience (14 scenarios) - IN PROGRESS
 - 🔄 Error handling & edge cases (15 scenarios) - IN PROGRESS
 - ⏳ Boundary conditions (20 scenarios) - PENDING
 
@@ -195,9 +198,8 @@ Common terms already added:
 ### Repository Info
 
 - **URL**: https://github.com/osbornesec/cpskdb
-- **Owner**: Michael Osborne (Michael [at] allthingsai.life)
+- **Owner**: CPSKDB Maintainers (contact via GitHub Issues/Discussions)
 - **Branch**: main
-
 ### Commit Standards
 
 ```text

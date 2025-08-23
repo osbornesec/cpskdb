@@ -42,9 +42,9 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         if self.temp_dir and os.path.exists(self.temp_dir):
             try:
                 shutil.rmtree(self.temp_dir)
-            except Exception:
+            except Exception as e:
                 # Log but don't fail teardown
-                pass
+                logger.warning(f"Failed to remove temp dir {self.temp_dir}: {e}")
 
     def test_complete_developer_setup_from_fresh_environment(self):
         """Test complete developer setup from fresh environment"""
@@ -129,7 +129,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
         self.assertIn(upsert_response.status_code, [200, 201])
 
         search_query = {
-            "vector": [0.15] * 128,
+            "vector": [0.15] * VECTOR_DIM,
             "limit": 5,
             "with_payload": True,
         }

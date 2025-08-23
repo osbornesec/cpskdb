@@ -25,11 +25,12 @@ class TestQdrantDockerComposeStartupOrder(QdrantDockerComposeTestBase):
 
     def tearDown(self):
         """Clean up test environment"""
+        import shutil
+
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
         # Clean up temporary directory
         if hasattr(self, "temp_dir") and self.temp_dir:
-            import shutil
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def create_compose_with_dependent_services(self):
@@ -66,53 +67,34 @@ volumes:
             cwd=self.temp_dir,
         )
         self.assertEqual(result.returncode, 0)
-
-        self.assertTrue(self.wait_for_qdrant_ready())
-
-        time.sleep(5)
-        logs_result = subprocess.run(
-            ["docker", "logs", "test_client_startup"],
-            capture_output=True,
-            text=True,
-        )
-
-        if logs_result.returncode == 0:
-            logs_content = logs_result.stdout + logs_result.stderr
-            # Use more flexible log checking
-            ready_indicators = ["ready", "Ready", "Qdrant is ready"]
-            found_indicator = any(indicator in logs_content for indicator in ready_indicators)
-            self.assertTrue(found_indicator, f"Expected ready indicator in logs: {logs_content}")
-
-    def test_dependent_services_can_connect_immediately(self):
-        """Test dependent services can connect immediately"""
-        compose_content = self.create_compose_with_dependent_services()
-        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
-
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-        self.assertEqual(result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
 
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
 
-        time.sleep(10)
-        logs_result = subprocess.run(
-            ["docker", "logs", "test_client_startup"],
-            capture_output=True,
-            text=True,
-        )
+        # Wait for dependent service to complete with timeout
+        timeout = 30
+        poll_interval = 2
+        start_time = time.time()
+        logs_found = False
+        while time.time() - start_time < timeout:
+            logs_result = subprocess.run(
+                ["docker", "logs", "test_client_startup"],
+                capture_output=True,
+                text=True,
+            )
+            if logs_result.returncode == 0:
+                logs_content = logs_result.stdout + logs_result.stderr
+                ready_indicators = ["ready", "Ready", "Qdrant is ready"]
+                if any(indicator in logs_content for indicator in ready_indicators):
+                    logs_found = True
+                    break
+            time.sleep(poll_interval)
 
-        if logs_result.returncode == 0:
-            logs_content = logs_result.stdout + logs_result.stderr
-            # Use more flexible log checking
-            ready_indicators = ["ready", "Ready", "Qdrant is ready"]
-            found_indicator = any(indicator in logs_content for indicator in ready_indicators)
-            self.assertTrue(found_indicator, f"Expected ready indicator in logs: {logs_content}")
+        self.assertTrue(
+            logs_found,
+            f"Expected ready indicator not found within timeout. Last logs: {logs_content if 'logs_content' in locals() else 'No logs available'}"
+        )
 
     def test_startup_order_with_health_check_dependencies(self):
         """Test startup order with health check dependencies"""
@@ -143,21 +125,6 @@ volumes:
 """
 
         self.compose_file = self.setup_compose_file(compose_with_health, self.temp_dir)
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
-            capture_output=True,
-            text=True,
-            cwd=self.temp_dir,
-        )
-
-        if result.returncode == 0:
-            self.assertTrue(self.wait_for_qdrant_ready())
-
-    def test_startup_order_maintained_across_stack_restarts(self):
-        """Test startup order maintained across stack restarts"""
-        compose_content = self.create_compose_with_dependent_services()
-        self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
-
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,

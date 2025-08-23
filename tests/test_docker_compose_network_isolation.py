@@ -27,9 +27,15 @@ class TestQdrantDockerComposeNetworkIsolation(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        if self.temp_dir:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+            self.temp_dir = None
 
     def test_network_isolation_between_compose_stacks(self):
         """Test network isolation between different Docker Compose stacks"""
+        temp_dir2 = None
+        compose_file2 = None
+
         compose_content_stack1 = """
 version: '3.8'
 
@@ -54,7 +60,9 @@ volumes:
   qdrant_data_stack1:
 """
 
-        self.compose_file = self.setup_compose_file(compose_content_stack1, self.temp_dir)
+        self.compose_file = self.setup_compose_file(
+            compose_content_stack1, self.temp_dir
+        )
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
@@ -86,34 +94,58 @@ volumes:
   qdrant_data_stack2:
 """
 
-        temp_dir2 = tempfile.mkdtemp()
-        compose_file2 = self.setup_compose_file(compose_content_stack2, temp_dir2)
-
-        result2 = subprocess.run(
-            ["docker", "compose", "-f", str(compose_file2), "up", "-d"],
-            capture_output=True,
-            text=True,
-            cwd=temp_dir2,
-        )
-
         try:
-            if result2.returncode == 0:
-                time.sleep(10)
+            temp_dir2 = tempfile.mkdtemp()
+            compose_file2 = self.setup_compose_file(compose_content_stack2, temp_dir2)
 
-                try:
-                    response2 = requests.get("http://localhost:6334/healthz", timeout=10)
-                    if response2.status_code == 200:
-                        self.assertEqual(response1.status_code, 200)
-                        self.assertEqual(response2.status_code, 200)
-                except requests.exceptions.ConnectionError:
-                    pass
-        finally:
-            subprocess.run(
-                ["docker", "compose", "-f", str(compose_file2), "down", "-v"],
+            result2 = subprocess.run(
+                ["docker", "compose", "-f", str(compose_file2), "up", "-d"],
                 capture_output=True,
+                text=True,
                 cwd=temp_dir2,
             )
-            shutil.rmtree(temp_dir2, ignore_errors=True)
+
+            if result2.returncode == 0:
+                # Wait for second stack to be ready with timeout
+                max_retries = 30
+                for _ in range(max_retries):
+                    try:
+                        response2 = requests.get("http://localhost:6334/healthz", timeout=5)
+                        if response2.status_code == 200:
+                            break
+                    except requests.exceptions.ConnectionError:
+                        time.sleep(1)
+                else:
+                    self.skipTest("Second stack failed to start within timeout")
+
+                # Verify both stacks are accessible on different ports
+                response2 = requests.get("http://localhost:6334/healthz", timeout=10)
+                self.assertEqual(response1.status_code, 200)
+                self.assertEqual(response2.status_code, 200)
+
+                # Verify network isolation by checking different networks
+                network1_result = subprocess.run(
+                    ["docker", "inspect", "test_qdrant_stack1", "--format={{.NetworkSettings.Networks}}"],
+                    capture_output=True, text=True
+                )
+                network2_result = subprocess.run(
+                    ["docker", "inspect", "test_qdrant_stack2", "--format={{.NetworkSettings.Networks}}"],
+                    capture_output=True, text=True
+                )
+
+                if network1_result.returncode == 0 and network2_result.returncode == 0:
+                    self.assertIn("stack1-network", network1_result.stdout)
+                    self.assertIn("stack2-network", network2_result.stdout)
+                    self.assertNotIn("stack2-network", network1_result.stdout)
+                    self.assertNotIn("stack1-network", network2_result.stdout)
+        finally:
+            if compose_file2 and temp_dir2:
+                subprocess.run(
+                    ["docker", "compose", "-f", str(compose_file2), "down", "-v"],
+                    capture_output=True,
+                    cwd=temp_dir2,
+                )
+                shutil.rmtree(temp_dir2, ignore_errors=True)
 
     def test_network_security_and_access_control(self):
         """Test network security and access control scenarios"""
@@ -144,23 +176,72 @@ volumes:
   qdrant_data:
 """
 
-        self.compose_file = self.setup_compose_file(compose_content_isolated, self.temp_dir)
+        self.compose_file = self.setup_compose_file(
+            compose_content_isolated, self.temp_dir
+        )
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
 
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        network_result = subprocess.run(
+        # Dynamically get the network name
+        network_name_result = subprocess.run(
             [
                 "docker",
                 "inspect",
                 "test_qdrant_isolated",
-                "--format={{.NetworkSettings.Networks}}",
+                "--format={{range $key, $value := .NetworkSettings.Networks}}{{$key}}{{end}}",
             ],
             capture_output=True,
             text=True,
         )
+        self.assertEqual(network_name_result.returncode, 0)
+        network_name = network_name_result.stdout.strip()
 
-        if network_result.returncode == 0:
-            network_info = network_result.stdout.strip()
-            self.assertIn("external-access", network_info)
+        # Get Qdrant container IP
+        ip_result = subprocess.run(
+            [
+                "docker",
+                "inspect", 
+                "test_qdrant_isolated",
+                "--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        qdrant_ip = ip_result.stdout.strip()
+        
+        # Test connectivity from same network (should succeed)
+        same_network_test = subprocess.run(
+            [
+                "docker", "run", "--rm", "--network", network_name,
+                "curlimages/curl:latest", "curl", "-f", "--max-time", "5", 
+                f"http://{qdrant_ip}:6333/healthz"
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(same_network_test.returncode, 0, 
+                        f"Same network access should succeed: {same_network_test.stderr}")
+        
+        # Test connectivity from different network (should fail) 
+        # Create a separate network for isolation test
+        subprocess.run(["docker", "network", "create", "test_isolated_network"], 
+                      capture_output=True)
+        
+        try:
+            different_network_test = subprocess.run(
+                [
+                    "docker", "run", "--rm", "--network", "test_isolated_network",
+                    "curlimages/curl:latest", "curl", "-f", "--max-time", "5",
+                    f"http://{qdrant_ip}:6333/healthz"
+                ],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(different_network_test.returncode, 0,
+                              "Different network access should fail (network isolation)")
+        finally:
+            # Cleanup test network
+            subprocess.run(["docker", "network", "rm", "test_isolated_network"],
+                          capture_output=True)

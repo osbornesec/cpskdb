@@ -21,7 +21,7 @@ class TestQdrantDockerComposeContainerEdgeCases(QdrantDockerComposeExtendedTestB
         # Docker has a limit but it's quite high (around 253 chars for hostname)
         # Test with a reasonable long name that should work
         reasonable_long_name = "qdrant_test_" + "a" * 100
-        
+
         compose_content = f"""
 version: '3.8'
 services:
@@ -118,13 +118,12 @@ services:
         )
         self.assertEqual(response.status_code, 200)
 
-        # Stop and completely remove container including volumes
+        # Stop and remove container (but preserve volumes)
         subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "down", "-v"],
+            ["docker", "compose", "-f", str(self.compose_file), "down"],
             capture_output=True,
             cwd=self.temp_dir,
         )
-
         # Start again (volumes should persist)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)

@@ -6,6 +6,8 @@ This module implements comprehensive state persistence testing for scenarios
 "Qdrant Data Persistence Across Stack Restarts" from the test specification.
 """
 
+import shutil
+import json
 import subprocess
 import tempfile
 import unittest
@@ -27,10 +29,26 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
-        # Clean up temporary directory
-        if hasattr(self, "temp_dir") and self.temp_dir:
-            import shutil
-            shutil.rmtree(self.temp_dir, ignore_errors=True)
+        if self.temp_dir:
+            try:
+                shutil.rmtree(self.temp_dir)
+            except Exception as e:
+                # Do not fail tests on cleanup, but surface the issue for debugging
+                print(f"Warning: failed to remove temp dir {self.temp_dir}: {e}")
+            finally:
+                self.temp_dir = None
+    def _generate_test_vectors(self, count: int, vector_size: int) -> list:
+        """Generate test vectors with predictable pattern."""
+        test_vectors = []
+        for i in range(count):
+            test_vectors.append(
+                {
+                    "id": i + 1,
+                    "vector": [float(i % 4)] * vector_size,
+                    "payload": {"category": f"test_{i}", "value": i * 10},
+                }
+            )
+        return test_vectors
 
     def test_collection_metadata_persists_across_restarts(self):
         """Test collection metadata persists across restarts"""
@@ -64,14 +82,14 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
 
         collection_info = info_response.json()
         self.assertIn("result", collection_info)
-        
+
         # Safe nested JSON access with proper error handling
         result = collection_info.get("result", {})
         config = result.get("config", {})
         params = config.get("params", {})
         vectors = params.get("vectors", {})
         size = vectors.get("size")
-        
+
         self.assertIsNotNone(size, "Vector size should be present in config")
         self.assertEqual(size, 128)
 
@@ -142,15 +160,7 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         )
         self.assertIn(create_response.status_code, [200, 201])
 
-        test_vectors = []
-        for i in range(10):
-            test_vectors.append(
-                {
-                    "id": i + 1,
-                    "vector": [float(i % 4)] * 8,
-                    "payload": {"category": f"test_{i}", "value": i * 10},
-                }
-            )
+        test_vectors = self._generate_test_vectors(10, 8)
 
         batch_data = {"points": test_vectors}
         upsert_response = requests.put(
@@ -201,7 +211,7 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         for result in search_results["result"]:
             self.assertIn("payload", result)
             self.assertIn("category", result["payload"])
-    
+
     def test_volume_persistence_verification(self):
         """Test volume persistence verification across container lifecycle"""
         compose_content = self.create_production_compose_content()
@@ -209,20 +219,22 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
         self.assertEqual(result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
-        
+
         # Verify volume mount exists
         inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_production", "--format={{.Mounts}}"],
+            ["docker", "inspect", "test_qdrant_production", "--format={{json .Mounts}}"],
             capture_output=True,
             text=True,
         )
-        
+
         if inspect_result.returncode == 0:
-            mounts_info = inspect_result.stdout
-            self.assertIn("qdrant", mounts_info.lower(), "Expected Qdrant volume mount")
-            # Check if the mount is a volume (not bind mount)
-            self.assertIn("volume", mounts_info.lower(), "Expected volume type mount")
-        
+            import json
+            mounts_info = json.loads(inspect_result.stdout)
+            self.assertTrue(
+                any(m.get('Type') == 'volume' and 'qdrant' in m.get('Name', '') for m in mounts_info),
+                f"Expected Qdrant volume mount not found in: {mounts_info}"
+            )
+
         # Create test data to verify persistence
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
         create_response = requests.put(
@@ -231,7 +243,7 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
             timeout=10,
         )
         self.assertIn(create_response.status_code, [200, 201])
-        
+
         # Stop and remove container (but keep volume)
         down_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "down"],
@@ -240,7 +252,7 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
             cwd=self.temp_dir,
         )
         self.assertEqual(down_result.returncode, 0)
-        
+
         # Start again and verify data persisted
         up_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
@@ -250,12 +262,14 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
         )
         self.assertEqual(up_result.returncode, 0)
         self.assertTrue(self.wait_for_qdrant_ready())
-        
+
         # Verify collection still exists
         get_response = requests.get(
             "http://localhost:6333/collections/volume_persist_test", timeout=10
         )
-        self.assertEqual(get_response.status_code, 200, "Collection should persist with volume")
+        self.assertEqual(
+            get_response.status_code, 200, "Collection should persist with volume"
+        )
 
 
 if __name__ == "__main__":

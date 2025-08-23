@@ -45,20 +45,19 @@ services:
         self.assertTrue(self.wait_for_qdrant_ready())
 
         # Verify service is responding
-        start_time = time.time()
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
 
         # Stop the service
+        stop_start_time = time.time()
         stop_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "stop"],
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
-            timeout=30,
+            timeout=35,
         )
-        end_time = time.time()
-        shutdown_duration = end_time - start_time
+        shutdown_duration = time.time() - stop_start_time
 
         self.assertEqual(stop_result.returncode, 0)
         # Assert shutdown completed within grace period
@@ -100,10 +99,12 @@ services:
             )
 
             if inspect_result.returncode == 0:
-                exit_code = inspect_result.stdout.strip()
-                # Verify we got a valid exit code (not empty or invalid)
-                if exit_code and exit_code.isdigit():
+                exit_code_str = inspect_result.stdout.strip()
+                try:
+                    exit_code = int(exit_code_str)
                     break
+                except (ValueError, TypeError):
+                    pass  # Not a valid integer yet
 
             time.sleep(retry_delay)
 
@@ -112,7 +113,7 @@ services:
             exit_code, "Failed to get container exit code after multiple retries"
         )
         self.assertEqual(
-            exit_code, "0", f"Container should exit with code 0, got: {exit_code}"
+            exit_code, 0, f"Container should exit with code 0, got: {exit_code}"
         )
 
     def test_data_integrity_maintained_after_graceful_shutdown(self):
@@ -228,7 +229,7 @@ services:
 
         # Verify logs contain shutdown-related messages (flexible check)
         log_content = logs_result.stdout.lower() + logs_result.stderr.lower()
-        shutdown_indicators = ["shutdown", "exit", "stop", "term", "signal"]
+        shutdown_indicators = ["shutdown", "exit", "stop", "term", "signal", "graceful", "closing"]
         has_shutdown_log = any(
             indicator in log_content for indicator in shutdown_indicators
         )
@@ -236,7 +237,7 @@ services:
         # Assert either explicit shutdown message or clean exit
         self.assertTrue(
             has_shutdown_log or logs_result.returncode == 0,
-            f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:200]}...",
+            f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:500]}...",
         )
 
 

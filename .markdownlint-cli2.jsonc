@@ -5,8 +5,13 @@
   ],
   "ignores": [
     ".claude/**",
-    "node_modules/**",
-    ".git/**"
+    "**/node_modules/**",
+    "**/.svelte-kit/**",
+    "**/storybook-static/**",
+    "**/.yarn/**",
+    "**/.pnpm-store/**",
+    "**/.idea/**",
+    "**/.vscode/**"
   ],
   "config": {
     // Line length rule - allow slightly longer lines for technical content

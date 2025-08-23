@@ -172,11 +172,8 @@ services:
                         try:
                             requests.get("http://localhost:0/healthz", timeout=5)
                             self.fail("Should not be able to connect to port 0")
-                        except (
-                            requests.exceptions.ConnectionError,
-                            requests.exceptions.InvalidURL,
-                        ):
-                            # Expected - port 0 is not valid for connections
+                        except requests.exceptions.RequestException:
+                            # Expected failure for port 0
                             pass
                 finally:
                     self.stop_qdrant_service(compose_file, temp_dir)

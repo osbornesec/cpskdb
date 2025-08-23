@@ -39,7 +39,7 @@ services:
             )
 
             try:
-                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
+                self.assertEqual(result.returncode, 0, f"Docker compose failed: {result.stderr}")
 
                 check_result = subprocess.run(
                     [
@@ -53,7 +53,7 @@ services:
                     capture_output=True,
                     text=True,
                 )
-                assert "Up" in check_result.stdout, "Qdrant container is not running"
+                self.assertIn("Up", check_result.stdout, "Qdrant container is not running")
 
             finally:
                 subprocess.run(
@@ -86,14 +86,11 @@ services:
             )
 
             try:
-                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
-                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
+                self.assertEqual(result.returncode, 0, f"Docker compose failed: {result.stderr}")
                 self.assertTrue(self.wait_for_qdrant_ready())
 
                 response = requests.get("http://localhost:6333/healthz", timeout=10)
-                assert response.status_code == 200, (
-                    f"Health check failed: {response.status_code}"
-                )
+                self.assertEqual(response.status_code, 200, f"Health check failed: {response.status_code}")
                 # Use proper assertion method instead of assert
                 health_response_valid = any(
                     [
@@ -150,7 +147,7 @@ volumes:
                     text=True,
                     cwd=temp_dir,
                 )
-                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
+                self.assertEqual(result.returncode, 0, f"Docker compose failed: {result.stderr}")
                 self.wait_for_qdrant_ready()
 
                 test_data = {"vectors": {"size": 4, "distance": "Cosine"}}
@@ -159,9 +156,7 @@ volumes:
                     json=test_data,
                     timeout=10,
                 )
-                assert create_response.status_code in [200, 201], (
-                    f"Failed to create collection: {create_response.status_code}"
-                )
+                self.assertIn(create_response.status_code, [200, 201], f"Failed to create collection: {create_response.status_code}")
 
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "restart", "qdrant"],
@@ -173,14 +168,12 @@ volumes:
                 get_response = requests.get(
                     "http://localhost:6333/collections/test_collection", timeout=10
                 )
-                assert get_response.status_code == 200, (
-                    f"Collection not found after restart: {get_response.status_code}"
-                )
+                self.assertEqual(get_response.status_code, 200, f"Collection not found after restart: {get_response.status_code}")
 
                 collection_info = get_response.json()
-                assert (
-                    collection_info["result"]["config"]["params"]["vectors"]["size"]
-                    == 4
+                self.assertEqual(
+                    collection_info["result"]["config"]["params"]["vectors"]["size"],
+                    4
                 )
 
             finally:

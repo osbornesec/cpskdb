@@ -4,7 +4,7 @@
 
 This document outlines comprehensive test scenarios for configuring the Qdrant
 vector database service in Docker Compose as part of Task 99. The test
-scenarios follow Kent Beck's Canon TDD methodology and cover all aspects of
+scenarios follow Kent Beck's TDD (Red-Green-Refactor) methodology and cover all aspects of
 the Qdrant service configuration including basic functionality, edge cases,
 error handling, and integration scenarios.
 
@@ -27,17 +27,16 @@ error handling, and integration scenarios.
 - **Given**: Qdrant service is configured with port mapping 6333:6333
 - **When**: Service is started
 - **Then**: Port 6333 is accessible from host machine
-- **Validation**: `curl http://localhost:6333/health` returns successful
+- **Validation**: `curl http://localhost:6333/healthz` returns successful
   response
 
 ##### Test Scenario: Qdrant Health Endpoint Returns Valid Response
 
 - **Given**: Qdrant service is running
-- **When**: Making GET request to `/health` endpoint
-- **Then**: Response contains valid health status JSON
+- **When**: Making GET request to `/healthz` endpoint
+- **Then**: Response body is "ok" (or equivalent healthy indicator)
 - **Validation**: HTTP status 200 and response body contains expected health
   data
-
 ##### Test Scenario: Qdrant API Endpoints Are Accessible
 
 - **Given**: Qdrant service is running on port 6333
@@ -84,6 +83,13 @@ error handling, and integration scenarios.
 - **When**: Container exits unexpectedly
 - **Then**: Container automatically restarts
 - **Validation**: Service becomes available again without manual intervention
+
+##### Test Scenario: CI Restart Policy Handles Crash Loops
+
+- **Given**: CI environment with `QDRANT_RESTART_POLICY=on-failure:3` (from `.env.ci`)
+- **When**: A forced crash loop is introduced in the Qdrant service
+- **Then**: The container attempts to restart 3 times and then stops
+- **Validation**: The CI pipeline detects the failed service and reports an error, ensuring regressions that cause crash loops are surfaced quickly.
 
 ### Edge Cases and Boundary Conditions
 
@@ -625,47 +631,31 @@ error handling, and integration scenarios.
 
 **Docker Compose Test Commands:**
 
-```bash
-# Basic service validation
-docker compose up qdrant -d
-curl -f http://localhost:6333/health
-
-# Volume persistence testing
-docker compose exec qdrant ls -la /qdrant/storage
 docker compose restart qdrant
 docker compose exec qdrant ls -la /qdrant/storage
 
 # Integration testing
 docker compose up -d
-docker compose exec app curl http://qdrant:6333/health
-```
+# If an app service exists in the full stack:
+# docker compose exec -T app /bin/sh -c 'curl -fsS http://qdrant:6333/healthz || wget -qO- http://qdrant:6333/healthz || exit 1'
+# Otherwise, for this repo's single-service setup:
+docker compose exec -T qdrant /bin/sh -c 'curl -fsS http://localhost:6333/healthz || wget -qO- http://localhost:6333/healthz || exit 1'
 
 **Health Check Validation:**
 
 ```bash
-# Verify health check configuration
-docker compose config | grep -A 5 "health check"
+# Validate from host machine
+curl http://localhost:6333/healthz
 
-# Monitor health status
-docker compose ps qdrant
-```
-
-#### Test Environment Management
-
-**Clean Environment Setup:**
-
-```bash
-# Start fresh for each test
-docker compose down -v
-docker system prune -f
-docker compose up qdrant -d
+# Validate from inside the container (if curl or wget is available)
+docker compose exec -T qdrant /bin/sh -c "command -v curl >/dev/null 2>&1 && curl -f http://localhost:6333/healthz || (command -v wget >/dev/null 2>&1 && wget --quiet --tries=1 --spider http://localhost:6333/healthz) || exit 1"
 ```
 
 **Test Data Management:**
 
 ```bash
 # Prepare test data
-make directory -p ./test-data/qdrant
+mkdir -p ./test-data/qdrant
 # Execute test scenarios
 # Validate results
 # Cleanup test environment

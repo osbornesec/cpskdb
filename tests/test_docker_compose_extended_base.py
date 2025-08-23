@@ -10,7 +10,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import requests  # type: ignore
 
@@ -41,13 +41,6 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         self.wait_for_port_available()
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def create_compose_file_from_dict(self, config: Dict[str, Any]) -> None:
-        """Create docker-compose.yml file with given config dictionary."""
-        # This method is deprecated - use setup_compose_file with string content instead
-        raise NotImplementedError(
-            "Use setup_compose_file with string templates instead of config dictionaries"
-        )
 
     def setup_compose_file(self, compose_content: str) -> Path:
         """Setup docker-compose file in temporary directory."""
@@ -89,7 +82,12 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             return False
 
     def wait_for_port_available(self, port: int = 6333, timeout: int = 10) -> bool:
-        """Wait for a port to become available."""
+        """
+        Wait for a port to become available.
+        
+        Note: There's an inherent race condition between checking port availability
+        and actually binding to it. Callers should implement retry logic if needed.
+        """
         import socket
 
         start_time = time.time()
@@ -97,9 +95,8 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             # Try to connect to see if port is in use
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(1)
-                result = s.connect_ex(("localhost", port))
-                if result != 0:  # Connection failed, port is available
-                    return True
+                if s.connect_ex(("localhost", port)) != 0:
+                    return True  # Port is available
             time.sleep(0.5)
         return False
 
@@ -107,8 +104,21 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         """Force cleanup any remaining containers on port 6333."""
         # Stop any containers using port 6333
         try:
+            # First, try to stop containers by port
             result = subprocess.run(
                 ["docker", "ps", "--filter", "publish=6333", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                container_names = result.stdout.strip().split("\n")
+                for name in container_names:
+                    subprocess.run(["docker", "stop", name], capture_output=True)
+                    subprocess.run(["docker", "rm", name], capture_output=True)
+
+            # Also try to stop containers by name pattern (e.g., containing "qdrant")
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "name=qdrant", "--format", "{{.Names}}"],
                 capture_output=True,
                 text=True,
             )
@@ -124,12 +134,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         """Get the restart count for a specific container."""
         try:
             result = subprocess.run(
-                [
-                    "docker",
-                    "inspect",
-                    container_name,
-                    "--format={{.RestartCount}}"
-                ],
+                ["docker", "inspect", container_name, "--format={{.RestartCount}}"],
                 capture_output=True,
                 text=True,
             )

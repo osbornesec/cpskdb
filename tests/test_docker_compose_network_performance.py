@@ -10,14 +10,14 @@ import tempfile
 import threading
 import time
 
-import requests  # type: ignore
+import requests
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
     """Test Qdrant network performance functionality via Docker Compose"""
-    
+
     # Production container name constant
     QDRANT_CONTAINER_NAME = "test_qdrant_production"
 
@@ -30,6 +30,10 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        if self.temp_dir:
+            import shutil
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+            self.temp_dir = None
 
     def test_network_connectivity_edge_cases_and_recovery(self):
         """Test network connectivity edge cases and failure recovery"""
@@ -102,7 +106,7 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
                 if response.status_code in [200, 404]:
                     operation_times.append(time.monotonic() - start)
             except requests.exceptions.RequestException as e:
-                errors.append(str(e))
+                errors.append(f"{type(e).__name__}: {str(e)}")
 
         threads = []
         for _ in range(10):
@@ -140,6 +144,15 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
         response = requests.get("http://localhost:6333/healthz", timeout=10)
         self.assertEqual(response.status_code, 200)
 
+        # Verify container exists before attempting restart
+        inspect_result = subprocess.run(
+            ["docker", "inspect", self.QDRANT_CONTAINER_NAME],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(inspect_result.returncode, 0, 
+                        f"Container '{self.QDRANT_CONTAINER_NAME}' not found")
+        
         restart_result = subprocess.run(
             ["docker", "restart", self.QDRANT_CONTAINER_NAME],
             capture_output=True,

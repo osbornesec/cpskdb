@@ -5,9 +5,9 @@ Integration and interaction tests for Qdrant Docker Compose configuration
 import subprocess
 import tempfile
 import time
-import requests  # type: ignore
+import requests
 
-from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: ignore
+from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeIntegration(QdrantDockerComposeTestBase):
@@ -17,44 +17,21 @@ class TestQdrantDockerComposeIntegration(QdrantDockerComposeTestBase):
         """Test: Qdrant Service Integrates with Docker Compose Stack"""
         compose_content = """
 version: '3.8'
-networks:
-  rag-network:
-    driver: bridge
 services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: test_qdrant_integration
     ports:
       - "6333:6333"
-    environment:
-      - QDRANT__LOG_LEVEL=INFO
-    volumes:
-      - qdrant_data:/qdrant/storage
-    restart: unless-stopped
-    networks:
-      - rag-network
   test_client:
-    image: nginx:alpine
+    image: alpine:latest
     container_name: test_client_service
-    networks:
-      - rag-network
+    command: sh -c "apk add --no-cache curl && sleep 5 && curl -f http://qdrant:6333/healthz && echo 'Connectivity test successful' || echo 'Connectivity test failed'"
     depends_on:
       - qdrant
-    command: >
-      sh -c "
-        echo 'Testing Qdrant connectivity...' &&
-        sleep 10 &&
-        wget --no-verbose --tries=3 --timeout=10 -O- http://qdrant:6333/healthz &&
-        echo 'Qdrant connectivity test successful!' &&
-        nginx -g 'daemon off;'
-      "
-volumes:
-  qdrant_data:
 """
-
         with tempfile.TemporaryDirectory() as temp_dir:
             compose_file = self.setup_compose_file(compose_content, temp_dir)
-
             try:
                 result = subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "up", "-d"],
@@ -78,13 +55,12 @@ volumes:
                     text=True,
                 )
                 self.assertEqual(client_logs.returncode, 0)
-                logs_text = client_logs.stdout.lower()
+                logs_text = client_logs.stdout
                 self.assertTrue(
-                    "connectivity test successful" in logs_text
-                    or "healthz check passed" in logs_text,
+                    "Connectivity test successful" in logs_text
+                    or "healthz check passed" in logs_text.lower(),
                     f"Internal network connectivity failed. Logs: {client_logs.stdout}",
                 )
-
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
@@ -146,12 +122,9 @@ services:
                 self.assertEqual(tester_logs.returncode, 0)
                 logs_text = tester_logs.stdout.lower()
 
-                self.assertIn("testing dns resolution", logs_text)
-                self.assertTrue(
-                    "healthz check passed" in logs_text
-                    or "network tests completed successfully" in logs_text,
-                    f"Network connectivity tests failed. Logs: {tester_logs.stdout}",
-                )
+                self.assertIn("testing dns resolution", logs_text, f"Expected 'testing dns resolution' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
+                self.assertIn("healthz check passed", logs_text, f"Expected 'healthz check passed' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
+                self.assertIn("network tests completed successfully", logs_text, f"Expected 'network tests completed successfully' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

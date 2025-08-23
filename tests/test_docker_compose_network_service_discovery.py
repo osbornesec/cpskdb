@@ -26,7 +26,7 @@ class TestQdrantDockerComposeServiceDiscovery(QdrantDockerComposeTestBase):
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
         # Clean up temporary directory
-        if hasattr(self, 'temp_dir') and self.temp_dir:
+        if hasattr(self, "temp_dir") and self.temp_dir:
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_service_discovery_complex_network_topologies(self):
@@ -59,26 +59,9 @@ services:
     container_name: test_client_complex
     networks:
       - frontend-net
-    command: >
-      sh -c "
-        echo 'Test client starting...';
-        while ! wget -q --spider http://qdrant:6333/healthz; do
-          echo 'Waiting for Qdrant...';
-          sleep 2;
-        done;
-        echo 'Qdrant accessible via service discovery';
-        
-        # Verify actual service discovery by getting service info
-        if wget -q -O /tmp/info.json http://qdrant:6333/; then
-          echo 'Service discovery successful - got service info';
-          cat /tmp/info.json | grep -q 'title' && echo 'Service info contains expected data';
-        else
-          echo 'Service discovery failed - could not get service info';
-          exit 1;
-        fi;
-        
-        echo 'Service discovery verification complete';
-      "
+    volumes:
+      - ./tests/test_scripts:/scripts
+    command: ["/scripts/service_discovery_test.sh"]
     depends_on:
       - qdrant
 
@@ -104,7 +87,12 @@ volumes:
         max_retries = 30
         for i in range(max_retries):
             client_status = subprocess.run(
-                ["docker", "inspect", "--format={{.State.Status}}", "test_client_complex"],
+                [
+                    "docker",
+                    "inspect",
+                    "--format={{.State.Status}}",
+                    "test_client_complex",
+                ],
                 capture_output=True,
                 text=True,
             )
@@ -113,7 +101,7 @@ volumes:
                 if status == "exited":
                     break
             time.sleep(1)
-        
+
         logs_result = subprocess.run(
             ["docker", "logs", "test_client_complex"],
             capture_output=True,
@@ -125,18 +113,32 @@ volumes:
             # Verify service discovery worked
             self.assertIn("Qdrant accessible via service discovery", logs_content)
             # Verify actual service discovery verification completed
-            self.assertIn("Service discovery successful - got service info", logs_content)
-            self.assertIn("Service info contains expected data", logs_content)
+            self.assertIn(
+                "Service discovery successful - got service info", logs_content
+            )
+            self.assertTrue(
+                "Service info validated with jq" in logs_content or
+                "Service info contains expected title field" in logs_content
+            )
             self.assertIn("Service discovery verification complete", logs_content)
-            
+
             # Additional verification: check that client container exited successfully
             exit_code_result = subprocess.run(
-                ["docker", "inspect", "--format={{.State.ExitCode}}", "test_client_complex"],
+                [
+                    "docker",
+                    "inspect",
+                    "--format={{.State.ExitCode}}",
+                    "test_client_complex",
+                ],
                 capture_output=True,
                 text=True,
             )
             if exit_code_result.returncode == 0:
                 exit_code = exit_code_result.stdout.strip()
-                self.assertEqual(exit_code, "0", "Test client should exit successfully after service discovery verification")
+                self.assertEqual(
+                    exit_code,
+                    "0",
+                    "Test client should exit successfully after service discovery verification",
+                )
         else:
             self.fail(f"Failed to get logs from test client: {logs_result.stderr}")

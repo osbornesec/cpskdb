@@ -60,9 +60,10 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
         self.assertIsNotNone(initial_restart_count)
 
         kill_result = subprocess.run(
-            ["docker", "kill", "--signal=SIGKILL", "test_qdrant_production"],
+            ["docker", "compose", "-f", str(self.compose_file), "kill", "-s", "SIGKILL", "qdrant"],
             capture_output=True,
             text=True,
+            cwd=self.temp_dir,
         )
         self.assertEqual(kill_result.returncode, 0)
 
@@ -81,10 +82,11 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
 
         self.assertTrue(self.wait_for_qdrant_ready())
 
-        subprocess.run(
+        kill_result = subprocess.run(
             ["docker", "kill", "--signal=SIGKILL", "test_qdrant_production"],
             capture_output=True,
         )
+        self.assertEqual(kill_result.returncode, 0)
         time.sleep(5)
         self.assertTrue(self.wait_for_qdrant_ready(timeout=60))
 

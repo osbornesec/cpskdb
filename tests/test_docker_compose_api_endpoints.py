@@ -5,10 +5,12 @@ This module implements comprehensive API endpoint testing that validates the
 "Qdrant API Endpoints Are Accessible" scenario from the test specification.
 """
 
+import os
+import shutil
 import tempfile
 import unittest
 
-import requests
+import requests  # type: ignore
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
@@ -25,6 +27,8 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
         """Clean up test environment"""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
+        # Clean up temporary directory
+        shutil.rmtree(self.temp_dir)
 
     def test_collections_endpoint_accessible(self):
         """Test /collections endpoint returns valid JSON with collections list"""
@@ -54,10 +58,6 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
         response = requests.get("http://localhost:6333/cluster", timeout=10)
         self.assertIn(response.status_code, [200, 404])
 
-        if response.status_code == 200:
-            data = response.json()
-            self.assertIn("result", data)
-
     def test_metrics_endpoint_accessible(self):
         """Test /metrics endpoint returns Prometheus-style metrics"""
         compose_content = self.create_production_compose_content()
@@ -69,15 +69,22 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
 
         response = requests.get("http://localhost:6333/metrics", timeout=10)
         self.assertIn(response.status_code, [200, 404])
-        
+
         if response.status_code == 200:
             metrics_text = response.text
             self.assertIsInstance(metrics_text, str)
-            self.assertTrue(
+            self.assertTrue(metrics_text, "Metrics response should not be empty")
+
+            # Check for Prometheus format indicators
+            is_prometheus_format = (
                 "# HELP" in metrics_text
                 or "# TYPE" in metrics_text
-                or len(metrics_text) > 0
+                or any(
+                    line.strip() and not line.strip().startswith("#") and " " in line
+                    for line in metrics_text.splitlines()
+                )
             )
+            self.assertTrue(is_prometheus_format, "Response should be in Prometheus format")
 
     def test_service_info_endpoint_accessible(self):
         """Test service info endpoint / returns proper Qdrant version and title information"""

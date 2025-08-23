@@ -25,9 +25,12 @@ class TestQdrantDockerComposeNetworkAdvanced(QdrantDockerComposeTestBase):
     def tearDown(self):
         """Clean up test environment"""
         if self.compose_file:
-            self.stop_qdrant_service(self.compose_file, self.temp_dir)
+            try:
+                self.stop_qdrant_service(self.compose_file, self.temp_dir)
+            except Exception as e:
+                print(f"Warning: failed to stop qdrant service: {e}")
         # Clean up temporary directory
-        if hasattr(self, 'temp_dir') and self.temp_dir:
+        if hasattr(self, "temp_dir") and self.temp_dir:
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_network_configuration_errors_handling(self):
@@ -63,12 +66,8 @@ volumes:
 
         self.assertNotEqual(result.returncode, 0)
         error_output = result.stderr + result.stdout
-        self.assertTrue(
-            any(
-                term in error_output.lower()
-                for term in ["network", "not found", "nonexistent"]
-            )
-        )
+        self.assertIn("network \"nonexistent_network\" not found", error_output.lower())
+
 
     def test_accessible_from_host_development_environment(self):
         """Test Qdrant accessible from host development environment scenario"""
@@ -149,6 +148,6 @@ volumes:
         )
 
         if inspect_result.returncode == 0:
-            network_info = inspect_result.stdout.strip()
+            network_info = inspect_result.stdout or ""
             self.assertIn("custom-bridge", network_info)
             self.assertIn("172.25.0.10", network_info)
