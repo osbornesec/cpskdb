@@ -5,7 +5,6 @@ This module implements comprehensive API endpoint testing that validates the
 "Qdrant API Endpoints Are Accessible" scenario from the test specification.
 """
 
-import os
 import shutil
 import tempfile
 import unittest
@@ -84,7 +83,9 @@ class TestQdrantDockerComposeAPIEndpoints(QdrantDockerComposeTestBase):
                     for line in metrics_text.splitlines()
                 )
             )
-            self.assertTrue(is_prometheus_format, "Response should be in Prometheus format")
+            self.assertTrue(
+                is_prometheus_format, "Response should be in Prometheus format"
+            )
 
     def test_service_info_endpoint_accessible(self):
         """Test service info endpoint / returns proper Qdrant version and title information"""

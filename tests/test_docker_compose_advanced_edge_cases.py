@@ -190,7 +190,13 @@ services:
                 while time.monotonic() - start_time < timeout:
                     # Check if container can detect the permission issue
                     logs_result = subprocess.run(
-                        ["docker", "logs", "--tail", "20", "test_qdrant_storage_recovery"],
+                        [
+                            "docker",
+                            "logs",
+                            "--tail",
+                            "20",
+                            "test_qdrant_storage_recovery",
+                        ],
                         capture_output=True,
                         text=True,
                         cwd=temp_dir,

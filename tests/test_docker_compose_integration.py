@@ -122,9 +122,21 @@ services:
                 self.assertEqual(tester_logs.returncode, 0)
                 logs_text = tester_logs.stdout.lower()
 
-                self.assertIn("testing dns resolution", logs_text, f"Expected 'testing dns resolution' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
-                self.assertIn("healthz check passed", logs_text, f"Expected 'healthz check passed' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
-                self.assertIn("network tests completed successfully", logs_text, f"Expected 'network tests completed successfully' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}")
+                self.assertIn(
+                    "testing dns resolution",
+                    logs_text,
+                    f"Expected 'testing dns resolution' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
+                )
+                self.assertIn(
+                    "healthz check passed",
+                    logs_text,
+                    f"Expected 'healthz check passed' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
+                )
+                self.assertIn(
+                    "network tests completed successfully",
+                    logs_text,
+                    f"Expected 'network tests completed successfully' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
+                )
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

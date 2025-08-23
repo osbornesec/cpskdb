@@ -7,7 +7,12 @@ import sys
 from pathlib import Path
 from typing import List
 
-from .config import FILE_MODIFICATION_TOOLS, PYTHON_EXTENSIONS, MARKDOWN_EXTENSIONS, get_bool_env
+from .config import (
+    FILE_MODIFICATION_TOOLS,
+    PYTHON_EXTENSIONS,
+    MARKDOWN_EXTENSIONS,
+    get_bool_env,
+)
 from .file_extractor import get_modified_files
 from .git_utils import auto_commit_changes
 from .markdown_checker import run_markdownlint, run_languagetool
@@ -39,7 +44,9 @@ def main() -> None:
         sys.exit(0)
 
     # Get modified Python and Markdown files
-    python_files, markdown_files = get_modified_files(tool_name, tool_input, tool_response)
+    python_files, markdown_files = get_modified_files(
+        tool_name, tool_input, tool_response
+    )
     all_modified_files = python_files + markdown_files
 
     project_root = find_project_root() or Path.cwd()
@@ -109,7 +116,11 @@ def main() -> None:
                 all_errors.append(f"\n=== LanguageTool issues in {file_path} ===")
                 all_errors.extend(lt_errors)
             else:
-                print(f"LanguageTool suggestions for {file_path}:\n" + "\n".join(lt_errors), file=sys.stderr)
+                print(
+                    f"LanguageTool suggestions for {file_path}:\n"
+                    + "\n".join(lt_errors),
+                    file=sys.stderr,
+                )
 
     # Auto-commit changes for safety only on success and when explicitly enabled
     if not all_errors and get_bool_env("AUTO_COMMIT", False):

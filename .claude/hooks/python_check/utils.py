@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 import os
 
+
 def find_project_root() -> Optional[Path]:
     """
     Find the project root by searching upwards for a .claude directory.
@@ -17,11 +18,11 @@ def find_project_root() -> Optional[Path]:
         if (current_path / ".claude").exists():
             return current_path
         current_path = current_path.parent
-    
+
     # Final check at the root directory
     if (current_path / ".claude").exists():
         return current_path
-    
+
     # Try git root as a fallback
     try:
         result = subprocess.run(
@@ -37,7 +38,7 @@ def find_project_root() -> Optional[Path]:
                 return Path(git_root)
     except Exception:
         pass
-    
+
     return None
 
 
@@ -60,7 +61,10 @@ def resolve_file_path(file_path: str, project_root: Path) -> Optional[Path]:
         return None
 
     # Ensure the canonical path is within the project root
-    if project_root.resolve() not in canonical_path.parents and canonical_path != project_root.resolve():
+    if (
+        project_root.resolve() not in canonical_path.parents
+        and canonical_path != project_root.resolve()
+    ):
         return None
 
     # Final check for existence

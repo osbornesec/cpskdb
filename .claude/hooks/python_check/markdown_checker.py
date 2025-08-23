@@ -4,7 +4,6 @@ Markdown quality checks using markdownlint and LanguageTool.
 
 import subprocess
 import sys
-from pathlib import Path
 from typing import List
 from .config import MARKDOWNLINT_TIMEOUT, LANGUAGETOOL_TIMEOUT, get_bool_env
 from .utils import find_project_root
@@ -44,13 +43,19 @@ def run_languagetool(file_path: str) -> List[str]:
     try:
         project_root = find_project_root()
         if not project_root:
-            print("Warning: Could not find project root for LanguageTool check.", file=sys.stderr)
+            print(
+                "Warning: Could not find project root for LanguageTool check.",
+                file=sys.stderr,
+            )
             return errors  # Could not find project root
 
         # Use the filtered LanguageTool script if it exists
         script_path = project_root / "scripts" / "filter_language_issues.py"
         if not script_path.exists():
-            print(f"Warning: LanguageTool script not found at {script_path}", file=sys.stderr)
+            print(
+                f"Warning: LanguageTool script not found at {script_path}",
+                file=sys.stderr,
+            )
             return errors  # Skip if script doesn't exist
 
         # Use the current Python interpreter for consistency and security

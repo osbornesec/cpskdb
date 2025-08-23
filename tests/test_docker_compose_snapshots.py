@@ -56,8 +56,9 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
             # More specific check for actual volume mounts
             self.assertTrue(
                 "qdrant_data" in mounts_info or "/qdrant/storage" in mounts_info,
-                f"Expected Qdrant volume mount not found in: {mounts_info}"
+                f"Expected Qdrant volume mount not found in: {mounts_info}",
             )
+
     def test_snapshot_creation_via_api(self):
         """Test snapshot creation via API"""
         compose_content = self.create_production_compose_content()
@@ -89,7 +90,7 @@ class TestQdrantDockerComposeSnapshots(QdrantDockerComposeTestBase):
         self.assertIn(
             snapshot_response.status_code,
             expected_codes,
-            f"Unexpected response code {snapshot_response.status_code}. Response: {snapshot_response.text}"
+            f"Unexpected response code {snapshot_response.status_code}. Response: {snapshot_response.text}",
         )
 
     def test_start_qdrant_service(self):

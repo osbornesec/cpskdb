@@ -10,7 +10,6 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from typing import Any
 
 import requests  # type: ignore
 
@@ -84,7 +83,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
     def wait_for_port_available(self, port: int = 6333, timeout: int = 10) -> bool:
         """
         Wait for a port to become available.
-        
+
         Note: There's an inherent race condition between checking port availability
         and actually binding to it. Callers should implement retry logic if needed.
         """

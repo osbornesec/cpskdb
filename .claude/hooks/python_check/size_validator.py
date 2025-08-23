@@ -28,7 +28,7 @@ def count_lines_of_code(file_path: str) -> int:
                     if delimiter_pos != -1:
                         in_multiline_string = False
                         string_delimiter = None
-                        line_to_process = line_to_process[delimiter_pos + 3:]
+                        line_to_process = line_to_process[delimiter_pos + 3 :]
                         if not line_to_process.strip():
                             break
                     else:

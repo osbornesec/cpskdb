@@ -66,8 +66,7 @@ volumes:
 
         self.assertNotEqual(result.returncode, 0)
         error_output = result.stderr + result.stdout
-        self.assertIn("network \"nonexistent_network\" not found", error_output.lower())
-
+        self.assertIn('network "nonexistent_network" not found', error_output.lower())
 
     def test_accessible_from_host_development_environment(self):
         """Test Qdrant accessible from host development environment scenario"""

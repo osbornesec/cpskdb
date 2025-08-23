@@ -185,14 +185,20 @@ volumes:
                 found_debug = any(ind in logs_text for ind in debug_indicators)
                 self.assertTrue(
                     found_debug,
-                    f"Expected DEBUG indicators {debug_indicators} in logs but none were found. Logs: {logs_text[:800]}"
+                    f"Expected DEBUG indicators {debug_indicators} in logs but none were found. Logs: {logs_text[:800]}",
                 )
 
                 # Optional: also ensure service reached a ready/running state
-                startup_indicators = ["starting", "initialized", "ready", "listening", "qdrant"]
+                startup_indicators = [
+                    "starting",
+                    "initialized",
+                    "ready",
+                    "listening",
+                    "qdrant",
+                ]
                 self.assertTrue(
                     any(ind in logs_text for ind in startup_indicators),
-                    f"Expected startup indicators {startup_indicators} in logs. Logs: {logs_text[:800]}"
+                    f"Expected startup indicators {startup_indicators} in logs. Logs: {logs_text[:800]}",
                 )
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

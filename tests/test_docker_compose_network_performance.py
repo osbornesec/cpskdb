@@ -32,6 +32,7 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
         if self.temp_dir:
             import shutil
+
             shutil.rmtree(self.temp_dir, ignore_errors=True)
             self.temp_dir = None
 
@@ -150,9 +151,12 @@ class TestQdrantDockerComposeNetworkPerformance(QdrantDockerComposeTestBase):
             capture_output=True,
             text=True,
         )
-        self.assertEqual(inspect_result.returncode, 0, 
-                        f"Container '{self.QDRANT_CONTAINER_NAME}' not found")
-        
+        self.assertEqual(
+            inspect_result.returncode,
+            0,
+            f"Container '{self.QDRANT_CONTAINER_NAME}' not found",
+        )
+
         restart_result = subprocess.run(
             ["docker", "restart", self.QDRANT_CONTAINER_NAME],
             capture_output=True,

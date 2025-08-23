@@ -93,7 +93,7 @@ volumes:
 
         self.assertTrue(
             logs_found,
-            f"Expected ready indicator not found within timeout. Last logs: {logs_content if 'logs_content' in locals() else 'No logs available'}"
+            f"Expected ready indicator not found within timeout. Last logs: {logs_content if 'logs_content' in locals() else 'No logs available'}",
         )
 
     def test_startup_order_with_health_check_dependencies(self):

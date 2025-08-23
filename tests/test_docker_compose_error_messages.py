@@ -47,8 +47,11 @@ services:
         self.assertNotEqual(result.returncode, 0, "Docker compose should fail")
         error_output = result.stderr + result.stdout
         self.assertTrue(
-            any(term in error_output.lower() for term in ["volume", "mount", "nonexistent", "path"]),
-            f"Error message should mention volume/mount issues: {error_output}"
+            any(
+                term in error_output.lower()
+                for term in ["volume", "mount", "nonexistent", "path"]
+            ),
+            f"Error message should mention volume/mount issues: {error_output}",
         )
         # Check that the container did not start
         check_result = subprocess.run(
@@ -115,7 +118,7 @@ volumes:
         self.compose_file = self.setup_compose_file(compose_with_secrets, self.temp_dir)
 
         # Start the service to generate logs
-        start_result = subprocess.run(
+        _ = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
             capture_output=True,
             text=True,
@@ -123,13 +126,12 @@ volumes:
         )
 
         # Wait for service to initialize and generate some logs
-        import time
-        
+
         # Wait for Qdrant to be ready
         start_time = time.time()
         timeout = 30
         ready = False
-        
+
         while time.time() - start_time < timeout:
             try:
                 response = requests.get("http://localhost:6333/healthz", timeout=2)
@@ -139,7 +141,7 @@ volumes:
             except requests.exceptions.RequestException:
                 pass
             time.sleep(0.5)
-        
+
         if not ready:
             self.fail("Qdrant service failed to become ready within timeout")
 
@@ -155,9 +157,9 @@ volumes:
 
         for sensitive_term in sensitive_terms:
             self.assertNotIn(
-                sensitive_term, 
-                log_output, 
-                f"Sensitive term '{sensitive_term}' found in logs"
+                sensitive_term,
+                log_output,
+                f"Sensitive term '{sensitive_term}' found in logs",
             )
 
     def test_invalid_collection_creation(self):
@@ -184,8 +186,14 @@ volumes:
         # Validate error response format
         error_json = error_response.json()
         self.assertIn("status", error_json, "Error response should contain 'status'")
-        self.assertIn("error", error_json["status"], "Error response should contain 'error' field")
-        self.assertEqual(error_json["status"]["error"], "Wrong input: Invalid data type for field `vectors.size`: expected a integer, but got a string", "Status should be 'error'")
+        self.assertIn(
+            "error", error_json["status"], "Error response should contain 'error' field"
+        )
+        self.assertEqual(
+            error_json["status"]["error"],
+            "Wrong input: Invalid data type for field `vectors.size`: expected a integer, but got a string",
+            "Status should be 'error'",
+        )
 
         # Test invalid search
         invalid_search = {"vector": "not_a_vector", "limit": 5}
@@ -199,8 +207,14 @@ volumes:
 
         # Validate search error response format matches collection error format
         search_error_json = search_error.json()
-        self.assertIn("status", search_error_json, "Search error should have consistent format")
-        self.assertIn("error", search_error_json["status"], "Search error should have consistent format")
+        self.assertIn(
+            "status", search_error_json, "Search error should have consistent format"
+        )
+        self.assertIn(
+            "error",
+            search_error_json["status"],
+            "Search error should have consistent format",
+        )
 
 
 if __name__ == "__main__":

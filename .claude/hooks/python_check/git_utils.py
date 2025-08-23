@@ -4,7 +4,6 @@ Git auto-commit functionality for safety backups.
 
 import subprocess
 import sys
-from pathlib import Path
 from typing import List
 from .config import GIT_TIMEOUT
 from .utils import find_project_root, resolve_file_path
@@ -62,11 +61,11 @@ def auto_commit_changes(modified_files: List[str], tool_name: str) -> None:
             return  # No changes to commit
 
         # Create commit message
-        file_list = ', '.join(staged_files)
+        file_list = ", ".join(staged_files)
         # Truncate file list if too long
         if len(file_list) > 100:
             file_list = file_list[:97] + "..."
-        
+
         commit_lines = [
             f"chore: auto-save changes from {tool_name}",
             "",

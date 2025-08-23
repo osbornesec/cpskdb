@@ -16,7 +16,10 @@ def run_ruff(file_path: str) -> List[str]:
     # Run ruff check (linting)
     try:
         result = subprocess.run(
-            ["ruff", "check", file_path], capture_output=True, text=True, timeout=RUFF_TIMEOUT
+            ["ruff", "check", file_path],
+            capture_output=True,
+            text=True,
+            timeout=RUFF_TIMEOUT,
         )
         if result.returncode != 0:
             errors.append(f"Ruff linting issues:\n{result.stdout}")
@@ -77,7 +80,7 @@ def run_mypy_batch(python_files: List[str], project_root: Path) -> List[str]:
     """Run mypy once for multiple files (project scope) when many files changed."""
     if not python_files:
         return []
-    
+
     errors: List[str] = []
     try:
         # Prefer running on project root for broader context
@@ -96,5 +99,5 @@ def run_mypy_batch(python_files: List[str], project_root: Path) -> List[str]:
             print("Warning: Mypy not found. Skipping mypy checks.", file=sys.stderr)
     except Exception as e:
         errors.append(f"Mypy error: {e}")
-    
+
     return errors

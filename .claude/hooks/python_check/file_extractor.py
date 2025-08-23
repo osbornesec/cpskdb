@@ -11,23 +11,23 @@ def _extract_paths_from_payload(payload: Any) -> List[str]:
     paths: List[str] = []
     if payload is None:
         return paths
-    
+
     # Strings
     if isinstance(payload, str):
         paths.append(payload)
         return paths
-    
+
     # Lists
     if isinstance(payload, list):
         for item in payload:
             paths.extend(_extract_paths_from_payload(item))
         return paths
-    
+
     # Dicts
     if isinstance(payload, dict):
         candidate_keys = [
             "file_path",
-            "path", 
+            "path",
             "file",
             "newPath",
             "oldPath",
@@ -37,21 +37,23 @@ def _extract_paths_from_payload(payload: Any) -> List[str]:
             "source",
         ]
         list_like_keys = ["files", "file_paths", "paths", "edits", "changes", "patches"]
-        
+
         for k in candidate_keys:
             if k in payload:
                 paths.extend(_extract_paths_from_payload(payload[k]))
-        
+
         for k in list_like_keys:
             if k in payload:
                 paths.extend(_extract_paths_from_payload(payload[k]))
-        
+
         return paths
-    
+
     return paths
 
 
-def get_modified_files(tool_name: str, tool_input: Dict[str, Any], tool_response: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+def get_modified_files(
+    tool_name: str, tool_input: Dict[str, Any], tool_response: Dict[str, Any]
+) -> Tuple[List[str], List[str]]:
     """Extract file paths that were modified from tool input/response."""
     files: List[str] = []
 

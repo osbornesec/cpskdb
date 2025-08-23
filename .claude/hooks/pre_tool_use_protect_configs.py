@@ -18,7 +18,6 @@ PROTECTED_CONFIG_FILES = [
     r"\.claude/settings\.local\.json$",
     r"\.claude/hooks/",
     r"\.claude/.*\.py$",  # Any Python file in .claude directory
-    
     # Ruff configurations
     r"ruff\.toml$",
     r"\.ruff\.toml$",

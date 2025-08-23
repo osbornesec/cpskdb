@@ -7,7 +7,6 @@ This module implements comprehensive state persistence testing for scenarios
 """
 
 import shutil
-import json
 import subprocess
 import tempfile
 import unittest
@@ -37,6 +36,7 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
                 print(f"Warning: failed to remove temp dir {self.temp_dir}: {e}")
             finally:
                 self.temp_dir = None
+
     def _generate_test_vectors(self, count: int, vector_size: int) -> list:
         """Generate test vectors with predictable pattern."""
         test_vectors = []
@@ -222,17 +222,26 @@ class TestQdrantDockerComposeStatePersistence(QdrantDockerComposeTestBase):
 
         # Verify volume mount exists
         inspect_result = subprocess.run(
-            ["docker", "inspect", "test_qdrant_production", "--format={{json .Mounts}}"],
+            [
+                "docker",
+                "inspect",
+                "test_qdrant_production",
+                "--format={{json .Mounts}}",
+            ],
             capture_output=True,
             text=True,
         )
 
         if inspect_result.returncode == 0:
             import json
+
             mounts_info = json.loads(inspect_result.stdout)
             self.assertTrue(
-                any(m.get('Type') == 'volume' and 'qdrant' in m.get('Name', '') for m in mounts_info),
-                f"Expected Qdrant volume mount not found in: {mounts_info}"
+                any(
+                    m.get("Type") == "volume" and "qdrant" in m.get("Name", "")
+                    for m in mounts_info
+                ),
+                f"Expected Qdrant volume mount not found in: {mounts_info}",
             )
 
         # Create test data to verify persistence

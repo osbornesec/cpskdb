@@ -117,8 +117,8 @@ volumes:
                 "Service discovery successful - got service info", logs_content
             )
             self.assertTrue(
-                "Service info validated with jq" in logs_content or
-                "Service info contains expected title field" in logs_content
+                "Service info validated with jq" in logs_content
+                or "Service info contains expected title field" in logs_content
             )
             self.assertIn("Service discovery verification complete", logs_content)
 

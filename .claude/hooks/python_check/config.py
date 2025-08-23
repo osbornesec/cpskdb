@@ -3,7 +3,6 @@ Core configuration and constants for the Python check hook.
 """
 
 import os
-from typing import Set
 
 # Tools that modify files
 FILE_MODIFICATION_TOOLS = ["Write", "Edit", "MultiEdit", "NotebookEdit"]

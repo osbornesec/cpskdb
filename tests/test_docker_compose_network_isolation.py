@@ -110,7 +110,9 @@ volumes:
                 max_retries = 30
                 for _ in range(max_retries):
                     try:
-                        response2 = requests.get("http://localhost:6334/healthz", timeout=5)
+                        response2 = requests.get(
+                            "http://localhost:6334/healthz", timeout=5
+                        )
                         if response2.status_code == 200:
                             break
                     except requests.exceptions.ConnectionError:
@@ -125,12 +127,24 @@ volumes:
 
                 # Verify network isolation by checking different networks
                 network1_result = subprocess.run(
-                    ["docker", "inspect", "test_qdrant_stack1", "--format={{.NetworkSettings.Networks}}"],
-                    capture_output=True, text=True
+                    [
+                        "docker",
+                        "inspect",
+                        "test_qdrant_stack1",
+                        "--format={{.NetworkSettings.Networks}}",
+                    ],
+                    capture_output=True,
+                    text=True,
                 )
                 network2_result = subprocess.run(
-                    ["docker", "inspect", "test_qdrant_stack2", "--format={{.NetworkSettings.Networks}}"],
-                    capture_output=True, text=True
+                    [
+                        "docker",
+                        "inspect",
+                        "test_qdrant_stack2",
+                        "--format={{.NetworkSettings.Networks}}",
+                    ],
+                    capture_output=True,
+                    text=True,
                 )
 
                 if network1_result.returncode == 0 and network2_result.returncode == 0:
@@ -202,7 +216,7 @@ volumes:
         ip_result = subprocess.run(
             [
                 "docker",
-                "inspect", 
+                "inspect",
                 "test_qdrant_isolated",
                 "--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
             ],
@@ -210,38 +224,64 @@ volumes:
             text=True,
         )
         qdrant_ip = ip_result.stdout.strip()
-        
+
         # Test connectivity from same network (should succeed)
         same_network_test = subprocess.run(
             [
-                "docker", "run", "--rm", "--network", network_name,
-                "curlimages/curl:latest", "curl", "-f", "--max-time", "5", 
-                f"http://{qdrant_ip}:6333/healthz"
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                network_name,
+                "curlimages/curl:latest",
+                "curl",
+                "-f",
+                "--max-time",
+                "5",
+                f"http://{qdrant_ip}:6333/healthz",
             ],
             capture_output=True,
             text=True,
         )
-        self.assertEqual(same_network_test.returncode, 0, 
-                        f"Same network access should succeed: {same_network_test.stderr}")
-        
-        # Test connectivity from different network (should fail) 
+        self.assertEqual(
+            same_network_test.returncode,
+            0,
+            f"Same network access should succeed: {same_network_test.stderr}",
+        )
+
+        # Test connectivity from different network (should fail)
         # Create a separate network for isolation test
-        subprocess.run(["docker", "network", "create", "test_isolated_network"], 
-                      capture_output=True)
-        
+        subprocess.run(
+            ["docker", "network", "create", "test_isolated_network"],
+            capture_output=True,
+        )
+
         try:
             different_network_test = subprocess.run(
                 [
-                    "docker", "run", "--rm", "--network", "test_isolated_network",
-                    "curlimages/curl:latest", "curl", "-f", "--max-time", "5",
-                    f"http://{qdrant_ip}:6333/healthz"
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--network",
+                    "test_isolated_network",
+                    "curlimages/curl:latest",
+                    "curl",
+                    "-f",
+                    "--max-time",
+                    "5",
+                    f"http://{qdrant_ip}:6333/healthz",
                 ],
                 capture_output=True,
                 text=True,
             )
-            self.assertNotEqual(different_network_test.returncode, 0,
-                              "Different network access should fail (network isolation)")
+            self.assertNotEqual(
+                different_network_test.returncode,
+                0,
+                "Different network access should fail (network isolation)",
+            )
         finally:
             # Cleanup test network
-            subprocess.run(["docker", "network", "rm", "test_isolated_network"],
-                          capture_output=True)
+            subprocess.run(
+                ["docker", "network", "rm", "test_isolated_network"],
+                capture_output=True,
+            )

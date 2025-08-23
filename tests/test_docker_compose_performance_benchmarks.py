@@ -77,7 +77,7 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
         self.assertGreaterEqual(
             len(health_times),
             self.MIN_HEALTH_CHECKS,
-            f"At least {self.MIN_HEALTH_CHECKS} successful health checks are required"
+            f"At least {self.MIN_HEALTH_CHECKS} successful health checks are required",
         )
 
         collections_times = []

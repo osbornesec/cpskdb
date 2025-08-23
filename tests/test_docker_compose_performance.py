@@ -65,7 +65,9 @@ volumes:
 
                 def make_request():
                     try:
-                        response = requests.get("http://localhost:6333/healthz", timeout=5)
+                        response = requests.get(
+                            "http://localhost:6333/healthz", timeout=5
+                        )
                         connection_results.append(response.status_code == 200)
                     except requests.exceptions.RequestException as e:
                         # Log the specific error for debugging
@@ -83,11 +85,13 @@ volumes:
 
                 success_rate = sum(connection_results) / len(connection_results)
                 self.assertGreater(
-                    success_rate, 0.8,
-                    f"Success rate {success_rate:.2f} below threshold. Failed requests: {10 - sum(connection_results)}/10"
+                    success_rate,
+                    0.8,
+                    f"Success rate {success_rate:.2f} below threshold. Failed requests: {10 - sum(connection_results)}/10",
                 )
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
+
     def test_qdrant_large_data_volume_handling(self):
         """Test Qdrant large data volume handling"""
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -111,7 +115,11 @@ volumes:
                 vectors = []
                 for i in range(100):
                     vectors.append(
-                        {"id": i, "vector": [0.1 * (i % 10)] * 128, "payload": {"index": i}}
+                        {
+                            "id": i,
+                            "vector": [0.1 * (i % 10)] * 128,
+                            "payload": {"index": i},
+                        }
                     )
 
                 batch_data = {"points": vectors}
@@ -132,8 +140,11 @@ volumes:
                 self.assertIn("result", collection_info)
                 self.assertEqual(collection_info["result"]["points_count"], 100)
             finally:
-                requests.delete("http://localhost:6333/collections/performance_test", timeout=10)
+                requests.delete(
+                    "http://localhost:6333/collections/performance_test", timeout=10
+                )
                 self.stop_qdrant_service(compose_file, temp_dir)
+
     def test_qdrant_memory_usage_monitoring(self):
         """Test Qdrant memory usage monitoring"""
         temp_dir = tempfile.mkdtemp()
@@ -163,13 +174,16 @@ volumes:
                 stats_output = stats_result.stdout
                 self.assertIn("test_qdrant_production", stats_output)
                 # Verify that memory usage statistics are present
-                lines = stats_output.strip().split('\n')
+                lines = stats_output.strip().split("\n")
                 if len(lines) > 1:  # Header + data line
                     # Check that we have actual memory data (not just "0B" or "-")
                     data_line = lines[1] if len(lines) > 1 else ""
                     self.assertTrue(
-                        any(mem_indicator in data_line for mem_indicator in ["B", "KiB", "MiB", "GiB"]),
-                        f"No memory usage data found in: {data_line}"
+                        any(
+                            mem_indicator in data_line
+                            for mem_indicator in ["B", "KiB", "MiB", "GiB"]
+                        ),
+                        f"No memory usage data found in: {data_line}",
                     )
         finally:
             self.stop_qdrant_service(compose_file, temp_dir)

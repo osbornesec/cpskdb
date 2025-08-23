@@ -229,7 +229,15 @@ services:
 
         # Verify logs contain shutdown-related messages (flexible check)
         log_content = logs_result.stdout.lower() + logs_result.stderr.lower()
-        shutdown_indicators = ["shutdown", "exit", "stop", "term", "signal", "graceful", "closing"]
+        shutdown_indicators = [
+            "shutdown",
+            "exit",
+            "stop",
+            "term",
+            "signal",
+            "graceful",
+            "closing",
+        ]
         has_shutdown_log = any(
             indicator in log_content for indicator in shutdown_indicators
         )

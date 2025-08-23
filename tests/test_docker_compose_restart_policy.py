@@ -60,7 +60,16 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
         self.assertIsNotNone(initial_restart_count)
 
         kill_result = subprocess.run(
-            ["docker", "compose", "-f", str(self.compose_file), "kill", "-s", "SIGKILL", "qdrant"],
+            [
+                "docker",
+                "compose",
+                "-f",
+                str(self.compose_file),
+                "kill",
+                "-s",
+                "SIGKILL",
+                "qdrant",
+            ],
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
