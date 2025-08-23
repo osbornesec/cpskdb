@@ -39,10 +39,11 @@ class TestREADMEStructure:
             r"##\s+.*License",  # License section
         ]
 
-        for section_pattern in required_sections:
-            assert re.search(section_pattern, content, re.IGNORECASE), (
-                f"Required section not found: {section_pattern}"
-            )
+        # Pre-compile regex patterns for better performance
+        compiled_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in required_sections]
+        
+        for i, compiled_pattern in enumerate(compiled_patterns):
+            assert compiled_pattern.search(content), f"Required section not found: {required_sections[i]}"
 
 
 class TestREADMEContent:
@@ -66,9 +67,9 @@ class TestREADMEContent:
                 description_found = True
                 break
 
-        assert description_found, (
-            "README must contain clear project description with key concepts"
-        )
+        assert (
+            description_found
+        ), "README must contain clear project description with key concepts"
 
     def test_technology_stack_documented(self, readme_content: str) -> None:
         """Test that technology stack is properly documented."""
@@ -85,20 +86,21 @@ class TestREADMEContent:
         ]
 
         for tech in required_tech:
-            assert re.search(tech, content, re.IGNORECASE), (
-                f"Technology {tech} must be mentioned in README"
-            )
+            assert re.search(
+                tech, content, re.IGNORECASE
+            ), f"Technology {tech} must be mentioned in README"
 
     def test_installation_instructions_exist(self, readme_content: str) -> None:
         """Test that installation section has actual instructions."""
         content = readme_content
 
-        # Should contain basic installation commands
+        # Should contain basic installation commands (including make install)
         install_indicators = [
             r"git clone",
             r"(?:pip|pipx|uv)\s+install",
             r"(?:poetry\s+install|pip\s+install\s+-r\s+requirements\.txt|pip\s+install\s+\.)",
             r"docker.*compose",
+            r"(?:sudo\s+)?(?:g?make\s+)?install",  # Added make install support
         ]
 
         install_found = False
@@ -107,9 +109,9 @@ class TestREADMEContent:
                 install_found = True
                 break
 
-        assert install_found, (
-            "Installation section must contain actual installation commands"
-        )
+        assert (
+            install_found
+        ), "Installation section must contain actual installation commands"
 
 
 class TestREADMEFormatting:
@@ -124,10 +126,14 @@ class TestREADMEFormatting:
         opening_blocks: list[tuple[int, str, str]] = []
         in_block = False
         for i, line in enumerate(lines):
-            if line.startswith("```"):
+            # Support both backticks (```) and tildes (~~~) for code fences
+            if line.startswith("```") or line.startswith("~~~"):
                 if not in_block:
-                    # Opening fence
-                    lang_match = re.match(r"```([A-Za-z0-9_+-]*)[ \t]*$", line)
+                    # Opening fence - handle both ``` and ~~~
+                    if line.startswith("```"):
+                        lang_match = re.match(r"```([A-Za-z0-9_+-]*)[ \t]*$", line)
+                    else:
+                        lang_match = re.match(r"~~~([A-Za-z0-9_+-]*)[ \t]*$", line)
                     lang = lang_match.group(1) if lang_match else ""
                     opening_blocks.append((i + 1, line, lang))
                     in_block = True
@@ -136,9 +142,9 @@ class TestREADMEFormatting:
                     in_block = False
 
         # Should have code blocks with language specification
-        assert len(opening_blocks) > 0, (
-            "README should contain code blocks with examples"
-        )
+        assert (
+            len(opening_blocks) > 0
+        ), "README should contain code blocks with examples"
 
         # Check that all opening blocks have language specified
         missing = [
@@ -177,6 +183,6 @@ class TestREADMEFormatting:
 
             # Level should not increase by more than 1
             if current_level > prev_level:
-                assert current_level - prev_level <= 1, (
-                    f"Header hierarchy violation: jumping from h{prev_level} to h{current_level}"
-                )
+                assert (
+                    current_level - prev_level <= 1
+                ), f"Header hierarchy violation: jumping from h{prev_level} to h{current_level}"

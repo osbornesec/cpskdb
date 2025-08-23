@@ -8,6 +8,19 @@ import sys
 from pathlib import Path
 
 
+def _is_precommit_installed() -> bool:
+    """Helper to check if pre-commit is installed."""
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pre_commit", "--version"],
+            capture_output=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
 class TestPrecommitSetup:
     """Test suite for pre-commit hooks configuration and setup."""
     
@@ -51,29 +64,22 @@ class TestPrecommitSetup:
         pre_commit_deps = [dep for dep in dev_deps if dep.startswith('pre-commit')]
         assert len(pre_commit_deps) > 0, "pre-commit should be in dev dependencies"
     
-    def test_precommit_install_creates_git_hook(self):
-        """Test that pre-commit install command creates .git/hooks/pre-commit file."""
-        # This test validates that the git repository has the structure to support
-        # pre-commit hooks installation
-        
+    def test_git_repository_structure_supports_precommit(self):
+        """Test that the git repository structure supports pre-commit installation."""
         # Arrange
         repo_root = Path(__file__).parent.parent
         git_dir = repo_root / ".git"
-        hooks_dir = git_dir / "hooks"
+        config_file = repo_root / ".pre-commit-config.yaml"
         
         # Act & Assert
         assert git_dir.exists(), f".git directory not found at {git_dir}"
         assert git_dir.is_dir(), ".git should be a directory"
+        assert config_file.exists(), f".pre-commit-config.yaml not found at {config_file}"
         
-        # Verify hooks directory exists or can be created
-        if not hooks_dir.exists():
-            # This is fine, git will create it when pre-commit install is run
-            pass
-        else:
+        # Verify git repository can support hooks
+        hooks_dir = git_dir / "hooks"
+        if hooks_dir.exists():
             assert hooks_dir.is_dir(), "hooks directory should be a directory"
-        
-        # The actual pre-commit file will be created when 'pre-commit install' is run
-        # This test just ensures the git repository structure supports it
     
     def test_precommit_config_includes_required_hooks(self):
         """Test that pre-commit configuration includes ruff, mypy, and standard hooks."""
@@ -91,21 +97,21 @@ class TestPrecommitSetup:
             for hook in repo['hooks']:
                 all_hooks.append(hook['id'])
         
-        # Verify essential hooks are present
+        # Verify essential hooks are present (updated to include new hooks)
         required_hooks = {
             'ruff', 'ruff-format',  # Ruff linting and formatting
             'mypy',                  # Type checking
             'trailing-whitespace',   # Standard cleanup
             'end-of-file-fixer',    # Standard cleanup
-            'check-yaml', 'check-toml'  # Config file validation
+            'check-yaml', 'check-toml',  # Config file validation
+            'check-json', 'mixed-line-ending'  # Additional standard hooks
         }
         
         for hook in required_hooks:
             assert hook in all_hooks, f"Required hook '{hook}' not found in configuration"
     
     @pytest.mark.skipif(
-        subprocess.run([sys.executable, "-m", "pre_commit", "--version"], 
-                      capture_output=True).returncode != 0,
+        not _is_precommit_installed(),
         reason="pre-commit not installed - run 'pip install -e .[dev]' first"
     )
     def test_precommit_can_be_installed_and_executed(self):
@@ -130,8 +136,7 @@ class TestPrecommitSetup:
             pytest.fail("pre-commit command not found - ensure it's installed in the virtual environment")
     
     @pytest.mark.skipif(
-        subprocess.run([sys.executable, "-m", "pre_commit", "--version"], 
-                      capture_output=True).returncode != 0,
+        not _is_precommit_installed(),
         reason="pre-commit not installed - run 'pip install -e .[dev]' first"
     )
     def test_precommit_install_creates_hooks(self):

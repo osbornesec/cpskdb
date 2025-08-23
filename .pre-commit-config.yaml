@@ -7,6 +7,8 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
+      - id: check-json
+      - id: mixed-line-ending
       - id: check-added-large-files
       - id: check-merge-conflict
 
@@ -14,9 +16,9 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.6
     hooks:
+      - id: ruff-format
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
 
   # Type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -24,3 +26,7 @@ repos:
     hooks:
       - id: mypy
         args: [--strict]
+        additional_dependencies:
+          - types-PyYAML
+          - types-setuptools
+          - types-requests

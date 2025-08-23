@@ -9,9 +9,9 @@ help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 $(VENV)/pyvenv.cfg: pyproject.toml
-	python3 -m venv $(VENV)
-	$(PIP) install --upgrade pip
-	$(PIP) install -e ".[dev]"
+	python3 -m venv $(VENV) || { echo "Failed to create virtual environment"; exit 1; }
+	$(PIP) install --upgrade pip || { echo "Failed to upgrade pip"; exit 1; }
+	$(PIP) install -e ".[dev]" || { echo "Failed to install dependencies"; exit 1; }
 
 install: $(VENV)/pyvenv.cfg  ## Install dependencies in virtual environment
 
@@ -22,7 +22,15 @@ docker-up:  ## Start Docker Compose services
 	fi
 	docker compose up -d qdrant
 	@echo "Waiting for Qdrant to be ready..."
-	@until curl -s http://localhost:6333/healthz >/dev/null 2>&1; do sleep 1; done
+	@MAX_RETRIES=30; RETRIES=0; \
+	until curl -s http://localhost:6333/healthz >/dev/null 2>&1; do \
+		if [ $$RETRIES -ge $$MAX_RETRIES ]; then \
+			echo "Timeout: Qdrant did not become ready after 30 seconds"; \
+			exit 1; \
+		fi; \
+		RETRIES=$$((RETRIES+1)); \
+		sleep 1; \
+	done
 	@echo "Qdrant is ready!"
 
 docker-down:  ## Stop Docker Compose services  
@@ -49,19 +57,25 @@ test-unit: install  ## Run unit tests only
 test-integration: install docker-up  ## Run integration tests
 	@if [ -d "tests/integration" ]; then \
 		$(PYTHON) -m pytest tests/integration/ -v; \
+		TEST_EXIT=$$?; \
 		$(MAKE) docker-down; \
+		exit $$TEST_EXIT; \
 	else \
 		echo "Integration tests directory not found. Create tests/integration/ directory first."; \
 		$(MAKE) docker-down; \
+		exit 1; \
 	fi
 
 test-e2e: install docker-up  ## Run end-to-end tests
 	@if [ -d "tests/e2e" ]; then \
 		$(PYTHON) -m pytest tests/e2e/ -v -s; \
+		TEST_EXIT=$$?; \
 		$(MAKE) docker-down; \
+		exit $$TEST_EXIT; \
 	else \
 		echo "E2E tests directory not found. Create tests/e2e/ directory first."; \
 		$(MAKE) docker-down; \
+		exit 1; \
 	fi
 
 format: install  ## Format code with ruff
@@ -95,4 +109,4 @@ clean:  ## Clean build artifacts and virtual environment
 	rm -rf $(VENV)
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -delete
-	rm -rf build/ dist/ *.egg-info/ .coverage htmlcov/ .pytest_cache/
+	rm -rf build/ dist/ *.egg-info/ .coverage htmlcov/ .pytest_cache/ .mypy_cache/
