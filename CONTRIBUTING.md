@@ -12,3 +12,5 @@ Before writing any code, use the `@agent-context7-docs-searcher` to research the
 # Before ANY coding
 @agent-context7-docs-searcher "Research [topic/library/pattern]"
 ```
+
+

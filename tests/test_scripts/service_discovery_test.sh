@@ -26,13 +26,6 @@ while [ $attempts -lt $max_attempts ]; do
   sleep 2
   attempts=$((attempts + 1))
 done
-    echo 'Qdrant accessible via service discovery'
-    break
-  fi
-  echo "Waiting for Qdrant... (attempt $((attempts + 1))/$max_attempts)"
-  sleep 2
-  attempts=$((attempts + 1))
-done
 
 if [ $attempts -eq $max_attempts ]; then
   echo "ERROR: Qdrant health check failed after $max_attempts attempts"

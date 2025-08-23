@@ -1,94 +1,88 @@
 # Personal Dictionary for LanguageTool
 # Technical terms commonly used in software development
 
-# Frameworks and Libraries
+# Frameworks, Libraries, and Tools
 FastAPI
 FastAPI-based
-FIXME
 LangGraph
 LangGraph-powered
 LanguageTool
 Mermaid
 MORFOLOGIK
+Node.js
 OpenAPI
 PostToolUse
 Qdrant
 ReDoc
 Redis
 Rerank
-TODO
-api-reference
-bool
-claude
-docstrings
-errorLength
 gunicorn
 httpx
-isinstance
 languagetool
-lastMethod
 markdownlint
 mypy
-noqa
-offset
 pydantic
 pytest
 pathlib
 readline
 rerankers
 reranking
-startswith
 subprocess
 uvicorn
 
-# Development Terms
+# Development Concepts and Terms
 API
 APIs
+CI/CD
+CLI
+CPU
+CSS
+GUI
+GPU
+HTML
+HTTP
+HTTPS
+JSON
+JWT
+LLM
+ML
+OAuth
+RAG
+SQL
+TDD
+URI
+URL
+UUID
+YAML
 bytecode
-cpskdb
-entrypoint
-gitignore
-grep
-init
-pycache
-reflog
-serena
-venv
-vscode
-
-# File Extensions and Formats
-Node.js
 chunking
-cli
 containerization
-csv
+docstrings
 docker
 dockerfile
 embeddings
-gui
-http
-https
-javascript
-json
-jwt
+entrypoint
+gitignore
+grep
+healthcheck
+init
 kubernetes
 llm
-mcp
+- mcp
 microservices
-oauth
+nslookup
+pycache
 python
 rag
+reflog
 sql
 tdd
 typescript
-uri
-url
 uuid
 vectorstore
-yaml
-yml
+venv
 
-# Variable Names and Code Terms
+# Code Terms and Keywords
 APISettings
 AgentSettings
 AttributeError
@@ -96,11 +90,13 @@ ClassName
 DatabaseSettings
 EmbeddingSettings
 FileNotFoundError
+FIXME
 ImportError
 KeyError
 MultiEdit
 NotebookEdit
 QdrantDockerComposeTestBase
+TODO
 TestCase
 TestQdrantDockerCompose
 TemporaryDirectory
@@ -111,21 +107,31 @@ assertGreaterEqual
 assertIsInstance
 assertLessEqual
 assertNotEqual
-collection
-cpus
+bool
 elif
 endpoints
-healthcheck
+isinstance
 methodName
 nonlocal
-nslookup
+noqa
+offset
 psutil
 snapshot
+startswith
 tempfile
 unittest
 wget
 
-# Technical Acronyms
+# File Extensions and Formats
+.py
+.md
+.json
+.yml
+.yaml
+.csv
+.txt
+
+# Acronyms (Canonical Case)
 AI
 CD
 CI
@@ -140,7 +146,6 @@ HTTPS
 JSON
 JWT
 LLM
-MCP
 ML
 OAuth
 RAG

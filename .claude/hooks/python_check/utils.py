@@ -5,7 +5,7 @@ Utility functions for path resolution and project root detection.
 import subprocess
 from pathlib import Path
 from typing import Optional
-
+import os
 
 def find_project_root() -> Optional[Path]:
     """
@@ -43,28 +43,25 @@ def find_project_root() -> Optional[Path]:
 
 def resolve_file_path(file_path: str, project_root: Path) -> Optional[Path]:
     """
-    Resolve a file path to an absolute path, handling relative paths and symlinks.
-    Returns None if the file doesn't exist or is outside the project root.
+    Resolve a file path to an absolute, canonical path, ensuring it's within the project root.
+    This function securely handles symlinks and prevents directory traversal.
+    Returns the resolved Path object if valid and existing, otherwise None.
     """
-    p = Path(file_path)
-    if not p.is_absolute():
-        p = project_root / p
+    # Create an absolute path from the file_path and project_root
+    if os.path.isabs(file_path):
+        p = Path(file_path)
+    else:
+        p = project_root / file_path
 
+    # Get the canonical path, which resolves any symlinks
     try:
-        relative_path = p.relative_to(project_root)
-    except ValueError:
-        # File is outside project root, check if it's a symlink pointing inside
-        if p.is_symlink():
-            try:
-                resolved_path = p.resolve()
-                try:
-                    relative_path = resolved_path.relative_to(project_root)
-                    p = resolved_path
-                except ValueError:
-                    return None
-            except Exception:
-                return None
-        else:
-            return None
+        canonical_path = Path(os.path.realpath(p))
+    except OSError:  # This can happen if the path is invalid
+        return None
 
-    return p if p.exists() else None
+    # Ensure the canonical path is within the project root
+    if project_root.resolve() not in canonical_path.parents and canonical_path != project_root.resolve():
+        return None
+
+    # Final check for existence
+    return canonical_path if canonical_path.exists() else None

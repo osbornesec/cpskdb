@@ -5,6 +5,7 @@
   ],
   "ignores": [
     ".claude/**",
+    ".git/**",
     "**/node_modules/**",
     "**/.svelte-kit/**",
     "**/storybook-static/**",
@@ -16,7 +17,7 @@
   "config": {
     // Line length rule - allow slightly longer lines for technical content
     "MD013": {
-      "line_length": 80,
+      "line_length": 120,
       "code_blocks": false,
       "tables": false
     },

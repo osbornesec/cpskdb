@@ -19,31 +19,28 @@ error handling, and integration scenarios.
 - **Given**: Docker Compose file with Qdrant service configuration
 - **When**: Running `docker compose up qdrant`
 - **Then**: Qdrant container starts without errors
-- **Validation**: Container status shows "running" and logs indicate
-  successful startup
+- **Validation**: Container status shows "running" and logs indicate successful startup
 
 ##### Test Scenario: Qdrant Exposes Port 6333 Correctly
 
 - **Given**: Qdrant service is configured with port mapping 6333:6333
 - **When**: Service is started
 - **Then**: Port 6333 is accessible from host machine
-- **Validation**: `curl http://localhost:6333/healthz` returns successful
-  response
+- **Validation**: `curl http://localhost:6333/healthz` returns successful response
 
 ##### Test Scenario: Qdrant Health Endpoint Returns Valid Response
 
 - **Given**: Qdrant service is running
 - **When**: Making GET request to `/healthz` endpoint
 - **Then**: Response body is "ok" (or equivalent healthy indicator)
-- **Validation**: HTTP status 200 and response body contains expected health
-  data
+- **Validation**: HTTP status 200 and response body contains expected health data
+
 ##### Test Scenario: Qdrant API Endpoints Are Accessible
 
 - **Given**: Qdrant service is running on port 6333
 - **When**: Making requests to core API endpoints
 - **Then**: All endpoints respond appropriately
-- **Validation**: `/collections`, `/cluster`, and `/metrics` endpoints return
-  valid responses
+- **Validation**: `/collections`, `/cluster`, and `/metrics` endpoints return valid responses
 
 #### Core Business Logic
 
@@ -226,8 +223,7 @@ error handling, and integration scenarios.
 - **Given**: Various error conditions (missing volumes, port conflicts, etc.)
 - **When**: Errors occur
 - **Then**: Error messages are clear and actionable
-- **Validation**: Error messages contain specific problem and suggested
-  solutions
+- **Validation**: Error messages contain specific problem and suggested solutions
 
 ##### Test Scenario: Qdrant Health Check Failure Messages
 
@@ -330,8 +326,7 @@ error handling, and integration scenarios.
 - **Given**: Docker Compose configured for production-like environment
 - **When**: Starting services
 - **Then**: Qdrant runs with production-appropriate settings
-- **Validation**: Performance and security settings match production
-  requirements
+- **Validation**: Performance and security settings match production requirements
 
 ## Test Scenario Prioritization
 
@@ -533,7 +528,7 @@ error handling, and integration scenarios.
 - **When**: Running typical vector operations
 - **Then**: Memory usage stays within defined limits
 - **Validation**: No memory limit violations or OOM kills
-
+
 ##### Test Scenario: Qdrant CPU Usage Patterns
 
 - **Given**: Qdrant under various load conditions
@@ -574,33 +569,33 @@ error handling, and integration scenarios.
 
 **Start with Core Units:**
 
-1. Individual container functionality
-2. Basic service configuration
-3. Essential API endpoints
-4. Core data operations
+1.  Individual container functionality
+2.  Basic service configuration
+3.  Essential API endpoints
+4.  Core data operations
 
 **Build Outward:**
 
-1. Container networking
-2. Volume management
-3. Service integration
-4. Full stack operation
+1.  Container networking
+2.  Volume management
+3.  Service integration
+4.  Full stack operation
 
 #### Outside-In Approach
 
 **Begin with User-Facing Behavior:**
 
-1. Developer workflow scenarios
-2. API accessibility tests
-3. Data persistence validation
-4. Performance requirements
+1.  Developer workflow scenarios
+2.  API accessibility tests
+3.  Data persistence validation
+4.  Performance requirements
 
 **Work Inward:**
 
-1. Service configuration details
-2. Container internals
-3. Low-level functionality
-4. Error handling mechanisms
+1.  Service configuration details
+2.  Container internals
+3.  Low-level functionality
+4.  Error handling mechanisms
 
 #### Balanced Coverage
 
@@ -631,6 +626,7 @@ error handling, and integration scenarios.
 
 **Docker Compose Test Commands:**
 
+```bash
 docker compose restart qdrant
 docker compose exec qdrant ls -la /qdrant/storage
 
@@ -640,6 +636,7 @@ docker compose up -d
 # docker compose exec -T app /bin/sh -c 'curl -fsS http://qdrant:6333/healthz || wget -qO- http://qdrant:6333/healthz || exit 1'
 # Otherwise, for this repo's single-service setup:
 docker compose exec -T qdrant /bin/sh -c 'curl -fsS http://localhost:6333/healthz || wget -qO- http://localhost:6333/healthz || exit 1'
+```
 
 **Health Check Validation:**
 
