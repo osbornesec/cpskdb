@@ -2,7 +2,7 @@
 
 import tomllib
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 
 class PyprojectManager:
@@ -54,7 +54,7 @@ class PyprojectManager:
             with open(self.pyproject_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
-    def add_dev_dependencies(self, custom_deps: List[str] = None) -> None:
+    def add_dev_dependencies(self, custom_deps: Optional[List[str]] = None) -> None:
         """Add development dependencies to pyproject.toml.
 
         Args:
