@@ -56,3 +56,12 @@ repos:
     hooks:
       - id: pydocstyle
         args: ["--config=pyproject.toml"]
+
+  # Local custom hooks
+  - repo: local
+    hooks:
+      - id: forbid-noqa
+        name: Forbid noqa
+        entry: scripts/forbid_noqa.py
+        language: system
+        types: [python]
