@@ -8,9 +8,14 @@ from being modified by Claude. This ensures all development tools remain stable.
 import json
 import re
 import sys
+from collections.abc import Mapping
 
 # All configuration files to protect
 PROTECTED_CONFIG_FILES = [
+    # Claude Code configuration - HIGHEST PRIORITY
+    r"\.claude/settings\.json$",
+    r"\.claude/settings\.local\.json$",
+    r"\.claude/hooks/",
     # Pre-commit configuration
     r"\.pre-commit-config\.ya?ml$",
     r"\.pre-commit-hooks\.ya?ml$",
@@ -110,7 +115,7 @@ DANGEROUS_CONFIG_PATTERNS = [
 ]
 
 
-def is_protected_config_file(file_path) -> bool:
+def is_protected_config_file(file_path: str) -> bool:
     """Check if a file path matches protected configuration patterns."""
     if not file_path:
         return False
@@ -121,7 +126,7 @@ def is_protected_config_file(file_path) -> bool:
     return False
 
 
-def check_config_bash_command(command):
+def check_config_bash_command(command: str) -> tuple[bool, str | None]:
     """Check if a bash command might interfere with configurations."""
     for pattern, reason in BLOCKED_CONFIG_COMMANDS:
         if re.search(pattern, command, re.IGNORECASE):
@@ -129,7 +134,7 @@ def check_config_bash_command(command):
     return True, None
 
 
-def check_content_for_config_changes(content):
+def check_content_for_config_changes(content: str) -> tuple[bool, str | None]:
     """Check if file content contains code that would modify configurations."""
     if not content:
         return True, None
@@ -139,50 +144,78 @@ def check_content_for_config_changes(content):
     return True, None
 
 
-def main() -> None:
-    try:
-        input_data = json.loads(sys.stdin.read())
-    except json.JSONDecodeError:
-        sys.exit(1)
+def evaluate_request(
+    tool_name: str, tool_input: Mapping[str, object]
+) -> tuple[int, str | None]:
+    """Evaluate the incoming tool request and decide whether to allow or block.
 
-    tool_name = input_data.get("tool_name", "")
-    tool_input = input_data.get("tool_input", {})
-
+    Returns a tuple of (exit_code, error_message). Exit code 0 allows, 2 blocks.
+    """
     # Check file modification tools
     if tool_name in ["Write", "Edit", "MultiEdit", "Delete"]:
         file_path = tool_input.get("file_path") or tool_input.get("path", "")
 
-        if is_protected_config_file(file_path):
-            sys.exit(0)
+        if is_protected_config_file(str(file_path)):
+            error_msg = (
+                f"Modification of configuration file '{file_path}' is blocked. "
+                "Configuration files should remain stable to ensure consistent development environment."
+            )
+            return 2, error_msg
 
         # For Write and Edit operations, also check the content for dangerous patterns
         if tool_name in ["Write", "Edit", "MultiEdit"]:
             content = tool_input.get("content") or tool_input.get("new_string", "")
 
             # Check Python and shell scripts for config manipulation
-            if file_path and (
-                file_path.endswith((".py", ".sh", ".bash"))
-            ):
-                is_valid, reason = check_content_for_config_changes(content)
+            if file_path and (str(file_path).endswith((".py", ".sh", ".bash"))):
+                is_valid, reason = check_content_for_config_changes(str(content))
                 if not is_valid:
-                    sys.exit(0)
+                    error_msg = (
+                        f"Script creation blocked: {reason}. "
+                        "Scripts that modify configuration files are not allowed."
+                    )
+                    return 2, error_msg
 
     # Check Bash commands for config interference
     if tool_name == "Bash":
-        command = tool_input.get("command", "")
+        command = str(tool_input.get("command", ""))
         is_valid, reason = check_config_bash_command(command)
 
         if not is_valid:
-            sys.exit(0)
+            error_msg = (
+                f"Command blocked: {reason}. "
+                "Configuration files and pre-commit setup should not be modified."
+            )
+            return 2, error_msg
 
     # Check Read operations to provide a warning (but don't block)
     if tool_name == "Read":
-        file_path = tool_input.get("file_path", "")
+        file_path = str(tool_input.get("file_path", ""))
         if is_protected_config_file(file_path):
             pass
 
     # Allow the tool to proceed
-    sys.exit(0)
+    return 0, None
+
+
+def main() -> None:
+    """Main entry point for the pre-tool-use hook."""
+    try:
+        input_data = json.loads(sys.stdin.read())
+    except json.JSONDecodeError:
+        sys.exit(1)
+
+    tool_name = str(input_data.get("tool_name", ""))
+    raw_tool_input = input_data.get("tool_input", {})
+    # Keep tool_input as a Mapping[str, object] to satisfy typing without Any
+    tool_input: Mapping[str, object] = (
+        raw_tool_input if isinstance(raw_tool_input, dict) else {}
+    )
+
+    exit_code, error_msg = evaluate_request(tool_name, tool_input)
+    if exit_code != 0 and error_msg:
+        sys.stderr.write(error_msg + "\n")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
