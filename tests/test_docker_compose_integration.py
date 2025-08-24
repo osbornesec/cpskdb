@@ -1,20 +1,19 @@
-"""
-Integration and interaction tests for Qdrant Docker Compose configuration
-"""
+"""Integration and interaction tests for Qdrant Docker Compose configuration."""
 
 import subprocess
 import tempfile
 import time
+
 import requests
 
 from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeIntegration(QdrantDockerComposeTestBase):
-    """Integration and interaction tests for Qdrant Docker Compose configuration"""
+    """Integration and interaction tests for Qdrant Docker Compose configuration."""
 
     def test_qdrant_multi_service_docker_compose_integration(self):
-        """Test: Qdrant Service Integrates with Docker Compose Stack"""
+        """Test: Qdrant Service Integrates with Docker Compose Stack."""
         compose_content = """
 version: '3.8'
 services:
@@ -35,37 +34,31 @@ services:
             try:
                 result = subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+                    check=False,
                     capture_output=True,
                     text=True,
                     cwd=temp_dir,
                 )
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 time.sleep(15)
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant not accessible from host"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant not accessible from host"
                 self.assert_qdrant_healthy()
 
                 client_logs = subprocess.run(
                     ["docker", "logs", "test_client_service"],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
-                self.assertEqual(client_logs.returncode, 0)
+                assert client_logs.returncode == 0
                 logs_text = client_logs.stdout
-                self.assertTrue(
-                    "Connectivity test successful" in logs_text
-                    or "healthz check passed" in logs_text.lower(),
-                    f"Internal network connectivity failed. Logs: {client_logs.stdout}",
-                )
+                assert "Connectivity test successful" in logs_text or "healthz check passed" in logs_text.lower(), f"Internal network connectivity failed. Logs: {client_logs.stdout}"
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_network_isolation_and_service_discovery(self):
-        """Test: Qdrant Service Discovery Within Docker Network"""
+        """Test: Qdrant Service Discovery Within Docker Network."""
         compose_content = """
 version: '3.8'
 networks:
@@ -107,42 +100,32 @@ services:
             try:
                 result = subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+                    check=False,
                     capture_output=True,
                     text=True,
                     cwd=temp_dir,
                 )
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 time.sleep(10)
                 tester_logs = subprocess.run(
-                    ["docker", "logs", "network_tester"], capture_output=True, text=True
+                    ["docker", "logs", "network_tester"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
                 )
-                self.assertEqual(tester_logs.returncode, 0)
+                assert tester_logs.returncode == 0
                 logs_text = tester_logs.stdout.lower()
 
-                self.assertIn(
-                    "testing dns resolution",
-                    logs_text,
-                    f"Expected 'testing dns resolution' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
-                )
-                self.assertIn(
-                    "healthz check passed",
-                    logs_text,
-                    f"Expected 'healthz check passed' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
-                )
-                self.assertIn(
-                    "network tests completed successfully",
-                    logs_text,
-                    f"Expected 'network tests completed successfully' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}",
-                )
+                assert "testing dns resolution" in logs_text, f"Expected 'testing dns resolution' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}"
+                assert "healthz check passed" in logs_text, f"Expected 'healthz check passed' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}"
+                assert "network tests completed successfully" in logs_text, f"Expected 'network tests completed successfully' in tester logs but it was not found. Logs: {tester_logs.stdout[:1000]!r}"
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_production_like_configuration(self):
-        """Test: Qdrant Production-like Configuration"""
+        """Test: Qdrant Production-like Configuration."""
         with tempfile.TemporaryDirectory() as temp_dir:
             compose_file = self.setup_compose_file(
                 self.create_production_compose_content(), temp_dir
@@ -150,20 +133,16 @@ services:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(30), "Production service not ready"
-                )
+                assert self.wait_for_qdrant_ready(30), "Production service not ready"
                 self.assert_qdrant_healthy()
 
                 info_response = requests.get("http://localhost:6333/", timeout=10)
-                self.assertEqual(info_response.status_code, 200)
+                assert info_response.status_code == 200
                 service_info = info_response.json()
-                self.assertIn("title", service_info)
-                self.assertIn("version", service_info)
+                assert "title" in service_info
+                assert "version" in service_info
 
                 collection_data = {
                     "vectors": {"size": 384, "distance": "Cosine"},
@@ -174,7 +153,7 @@ services:
                     json=collection_data,
                     timeout=10,
                 )
-                self.assertIn(create_response.status_code, [200, 201])
+                assert create_response.status_code in [200, 201]
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

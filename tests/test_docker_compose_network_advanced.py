@@ -1,10 +1,10 @@
-"""
-Tests for Qdrant Docker Compose advanced network functionality.
+"""Tests for Qdrant Docker Compose advanced network functionality.
 
 This module implements advanced network testing scenarios including network
 isolation, custom configurations, and complex topologies.
 """
 
+import contextlib
 import shutil
 import subprocess
 import tempfile
@@ -15,26 +15,24 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeNetworkAdvanced(QdrantDockerComposeTestBase):
-    """Test Qdrant advanced network functionality via Docker Compose"""
+    """Test Qdrant advanced network functionality via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
-            try:
+            with contextlib.suppress(Exception):
                 self.stop_qdrant_service(self.compose_file, self.temp_dir)
-            except Exception as e:
-                print(f"Warning: failed to stop qdrant service: {e}")
         # Clean up temporary directory
         if hasattr(self, "temp_dir") and self.temp_dir:
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_network_configuration_errors_handling(self):
-        """Test Qdrant network configuration errors with invalid network setups"""
+        """Test Qdrant network configuration errors with invalid network setups."""
         compose_content_invalid_network = """
 version: '3.8'
 services:
@@ -59,34 +57,35 @@ volumes:
 
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
         )
 
-        self.assertNotEqual(result.returncode, 0)
+        assert result.returncode != 0
         error_output = result.stderr + result.stdout
-        self.assertIn('network "nonexistent_network" not found', error_output.lower())
+        assert 'network "nonexistent_network" not found' in error_output.lower()
 
     def test_accessible_from_host_development_environment(self):
-        """Test Qdrant accessible from host development environment scenario"""
+        """Test Qdrant accessible from host development environment scenario."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         health_response = requests.get("http://localhost:6333/healthz", timeout=10)
-        self.assertEqual(health_response.status_code, 200)
+        assert health_response.status_code == 200
 
         api_response = requests.get("http://localhost:6333/", timeout=10)
-        self.assertEqual(api_response.status_code, 200)
+        assert api_response.status_code == 200
 
         collections_response = requests.get(
             "http://localhost:6333/collections", timeout=10
         )
-        self.assertEqual(collections_response.status_code, 200)
+        assert collections_response.status_code == 200
 
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
         create_response = requests.put(
@@ -94,10 +93,10 @@ volumes:
             json=collection_config,
             timeout=10,
         )
-        self.assertIn(create_response.status_code, [200, 201])
+        assert create_response.status_code in [200, 201]
 
     def test_custom_network_driver_configurations(self):
-        """Test custom network driver configurations"""
+        """Test custom network driver configurations."""
         compose_content_custom_bridge = """
 version: '3.8'
 networks:
@@ -131,9 +130,9 @@ volumes:
             compose_content_custom_bridge, self.temp_dir
         )
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         inspect_result = subprocess.run(
             [
@@ -142,11 +141,12 @@ volumes:
                 "test_qdrant_custom_bridge",
                 "--format={{.NetworkSettings.Networks}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
 
         if inspect_result.returncode == 0:
             network_info = inspect_result.stdout or ""
-            self.assertIn("custom-bridge", network_info)
-            self.assertIn("172.25.0.10", network_info)
+            assert "custom-bridge" in network_info
+            assert "172.25.0.10" in network_info

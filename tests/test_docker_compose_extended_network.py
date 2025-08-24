@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose network and configuration edge cases.
+"""Tests for Qdrant Docker Compose network and configuration edge cases.
 
 This module implements network, port, volume, and configuration-specific edge cases.
 """
@@ -35,9 +34,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_docker_compose_version_compatibility(self):
         """Test Docker Compose file with different version specifications."""
@@ -57,9 +56,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_network_configuration_edge_cases(self):
         """Test Docker Compose network configurations edge cases."""
@@ -88,9 +87,9 @@ networks:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_port_binding_edge_cases(self):
         """Test Docker Compose port binding edge cases."""
@@ -110,9 +109,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_log_configuration_edge_cases(self):
         """Test Docker Compose logging configurations edge cases."""
@@ -136,9 +135,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_docker_compose_tmpfs_edge_cases(self):
         """Test Docker Compose tmpfs mount configurations edge cases."""
@@ -159,6 +158,6 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()

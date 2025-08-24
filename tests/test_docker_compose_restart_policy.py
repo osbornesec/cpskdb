@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose restart policy functionality.
+"""Tests for Qdrant Docker Compose restart policy functionality.
 
 This module implements restart policy testing that validates the
 "Qdrant Restart Policy Functions Correctly" scenario from the test specification.
@@ -16,15 +15,15 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
-    """Test Qdrant restart policy functionality via Docker Compose"""
+    """Test Qdrant restart policy functionality via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
@@ -33,6 +32,7 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
         try:
             result = subprocess.run(
                 ["docker", "inspect", container_name, "--format={{.RestartCount}}"],
+                check=False,
                 capture_output=True,
                 text=True,
             )
@@ -46,18 +46,18 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
             return None
 
     def test_container_restarts_after_unexpected_exit(self):
-        """Test container automatically restarts when it exits unexpectedly"""
+        """Test container automatically restarts when it exits unexpectedly."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         initial_restart_count = self.get_container_restart_count(
             "test_qdrant_production"
         )
-        self.assertIsNotNone(initial_restart_count)
+        assert initial_restart_count is not None
 
         kill_result = subprocess.run(
             [
@@ -70,37 +70,41 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
                 "SIGKILL",
                 "qdrant",
             ],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
         )
-        self.assertEqual(kill_result.returncode, 0)
+        assert kill_result.returncode == 0
 
         time.sleep(5)
         new_restart_count = self.get_container_restart_count("test_qdrant_production")
-        self.assertIsNotNone(new_restart_count)
-        self.assertGreater(new_restart_count, initial_restart_count)
-        self.assertTrue(self.wait_for_qdrant_ready(timeout=60))
+        assert new_restart_count is not None
+        assert new_restart_count > initial_restart_count
+        assert self.wait_for_qdrant_ready(timeout=60)
 
     def test_unless_stopped_policy_behavior(self):
-        """Test unless-stopped policy behavior"""
+        """Test unless-stopped policy behavior."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         kill_result = subprocess.run(
             ["docker", "kill", "--signal=SIGKILL", "test_qdrant_production"],
+            check=False,
             capture_output=True,
         )
-        self.assertEqual(kill_result.returncode, 0)
+        assert kill_result.returncode == 0
         time.sleep(5)
-        self.assertTrue(self.wait_for_qdrant_ready(timeout=60))
+        assert self.wait_for_qdrant_ready(timeout=60)
 
         subprocess.run(
-            ["docker", "stop", "test_qdrant_production"], capture_output=True
+            ["docker", "stop", "test_qdrant_production"],
+            check=False,
+            capture_output=True,
         )
         time.sleep(5)
 
@@ -111,20 +115,21 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
                 "test_qdrant_production",
                 "--format={{.State.Running}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(status_result.returncode, 0)
-        self.assertEqual(status_result.stdout.strip(), "false")
+        assert status_result.returncode == 0
+        assert status_result.stdout.strip() == "false"
 
     def test_service_available_after_restart(self):
-        """Test that service becomes available again without manual intervention after restart"""
+        """Test that service becomes available again without manual intervention after restart."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         collection_name = "test_restart_collection"
         self.create_test_collection(collection_name)
@@ -132,23 +137,24 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
 
         subprocess.run(
             ["docker", "kill", "--signal=SIGKILL", "test_qdrant_production"],
+            check=False,
             capture_output=True,
         )
 
-        self.assertTrue(self.wait_for_qdrant_ready(timeout=60))
+        assert self.wait_for_qdrant_ready(timeout=60)
         self.assert_qdrant_healthy()
 
         response = requests.get("http://localhost:6333/collections", timeout=10)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_data_persists_across_automatic_restarts(self):
-        """Test that data persists across automatic restarts"""
+        """Test that data persists across automatic restarts."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         collection_name = "test_persistence_collection"
         self.create_test_collection(collection_name)
@@ -164,35 +170,36 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
             json=test_points,
             timeout=10,
         )
-        self.assertEqual(points_response.status_code, 200)
+        assert points_response.status_code == 200
 
         subprocess.run(
             ["docker", "kill", "--signal=SIGKILL", "test_qdrant_production"],
+            check=False,
             capture_output=True,
         )
 
-        self.assertTrue(self.wait_for_qdrant_ready(timeout=60))
+        assert self.wait_for_qdrant_ready(timeout=60)
         points_response = requests.post(
             f"http://localhost:6333/collections/{collection_name}/points/scroll",
             json={"limit": 10},
             timeout=10,
         )
-        self.assertEqual(points_response.status_code, 200)
+        assert points_response.status_code == 200
         points_data = points_response.json()
-        self.assertEqual(len(points_data.get("result", {}).get("points", [])), 2)
+        assert len(points_data.get("result", {}).get("points", [])) == 2
         # Verify the point IDs are preserved
         point_ids = [p["id"] for p in points_data.get("result", {}).get("points", [])]
-        self.assertIn(1, point_ids)
-        self.assertIn(2, point_ids)
+        assert 1 in point_ids
+        assert 2 in point_ids
 
     def test_restart_policy_configuration(self):
-        """Test that restart policy is properly configured in compose"""
+        """Test that restart policy is properly configured in compose."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         inspect_result = subprocess.run(
             [
@@ -201,12 +208,13 @@ class TestQdrantDockerComposeRestartPolicy(QdrantDockerComposeTestBase):
                 "test_qdrant_production",
                 "--format={{.HostConfig.RestartPolicy.Name}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(inspect_result.returncode, 0)
+        assert inspect_result.returncode == 0
         restart_policy = inspect_result.stdout.strip()
-        self.assertEqual(restart_policy, "unless-stopped")
+        assert restart_policy == "unless-stopped"
 
 
 if __name__ == "__main__":

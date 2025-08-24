@@ -1,6 +1,4 @@
-"""
-Core configuration and constants for the Python check hook.
-"""
+"""Core configuration and constants for the Python check hook."""
 
 import os
 

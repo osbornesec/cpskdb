@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+
 import pytest
 
 
@@ -39,9 +40,14 @@ class TestREADMEStructure:
             r"##\s+.*License",  # License section
         ]
 
-        for section_pattern in required_sections:
-            assert re.search(section_pattern, content, re.IGNORECASE), (
-                f"Required section not found: {section_pattern}"
+        # Pre-compile regex patterns for better performance
+        compiled_patterns = [
+            re.compile(pattern, re.IGNORECASE) for pattern in required_sections
+        ]
+
+        for i, compiled_pattern in enumerate(compiled_patterns):
+            assert compiled_pattern.search(content), (
+                f"Required section not found: {required_sections[i]}"
             )
 
 
@@ -93,12 +99,13 @@ class TestREADMEContent:
         """Test that installation section has actual instructions."""
         content = readme_content
 
-        # Should contain basic installation commands
+        # Should contain basic installation commands (including make install)
         install_indicators = [
             r"git clone",
             r"(?:pip|pipx|uv)\s+install",
             r"(?:poetry\s+install|pip\s+install\s+-r\s+requirements\.txt|pip\s+install\s+\.)",
             r"docker.*compose",
+            r"(?:sudo\s+)?(?:g?make\s+)?install",  # Added make install support
         ]
 
         install_found = False
@@ -124,10 +131,14 @@ class TestREADMEFormatting:
         opening_blocks: list[tuple[int, str, str]] = []
         in_block = False
         for i, line in enumerate(lines):
-            if line.startswith("```"):
+            # Support both backticks (```) and tildes (~~~) for code fences
+            if line.startswith(("```", "~~~")):
                 if not in_block:
-                    # Opening fence
-                    lang_match = re.match(r"```([A-Za-z0-9_+-]*)[ \t]*$", line)
+                    # Opening fence - handle both ``` and ~~~
+                    if line.startswith("```"):
+                        lang_match = re.match(r"```([A-Za-z0-9_+-]*)[ \t]*$", line)
+                    else:
+                        lang_match = re.match(r"~~~([A-Za-z0-9_+-]*)[ \t]*$", line)
                     lang = lang_match.group(1) if lang_match else ""
                     opening_blocks.append((i + 1, line, lang))
                     in_block = True

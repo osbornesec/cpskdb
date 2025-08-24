@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-Test script for LanguageTool installation and functionality.
-"""
+"""Test script for LanguageTool installation and functionality."""
+import sys
 
 try:
     import language_tool_python  # type: ignore
 except ImportError:
     print("LanguageTool not installed. Run: pip install language_tool_python")
-    exit(1)
+    sys.exit(1)
 
 
 def test_languagetool() -> None:

@@ -5,7 +5,7 @@ Before beginning, review these key principles:
 - **Subtask Selection**: The file `.ai/docs/tasks.md` is a Markdown file containing a prioritized list of subtasks, formatted as a numbered or bulleted list with descriptions. Subtasks are atomic and implementable in small increments.
 - **Subagents**: You have access to two specialized subagents:
   - **agent-context7-docs-searcher**: This subagent searches and retrieves relevant documentation from the project's context7 documentation repository. Invoke it by outputting a clear call like: "[CALL: agent-context7-docs-searcher] Query: [your specific query for docs related to the subtask]". It will respond with summarized docs, code examples, or APIs.
-  - **test-scenario-creator**: This subagent generates comprehensive test scenarios based on the subtask requirements. Invoke it by outputting: "[CALL: test-scenario-creator] Subtask: [subtask description]; Docs: [relevant docs from previous step]". It will return a list of edge-case-inclusive test scenarios, prioritized for TDD.
+  - **writetests**: This subagent generates comprehensive test scenarios based on the subtask requirements. Invoke it by outputting: "[CALL: writetests] Subtask: [subtask description]; Docs: [relevant docs from previous step]". It will return a list of edge-case-inclusive test scenarios, prioritized for TDD.
 - **TDD Iteration**: For each test scenario, use the following micro-steps in your response:
   1. State the current test scenario.
   2. Write the test code (in the appropriate language, assuming Python unless specified otherwise in docs).
@@ -23,8 +23,7 @@ Now, execute the following workflow step-by-step:
 
 2. **Lookup Documentation**: Invoke the agent-context7-docs-searcher subagent with a precise query tailored to the subtask (e.g., APIs, best practices, or existing code patterns). Incorporate the returned docs into your knowledge for the task. Output the call and summarize the results under [Step 2: Docs Lookup]. CoT: Explain how the docs inform the implementation.
 
-3. **Create Test Scenarios**: Invoke the test-scenario-creator subagent, providing the subtask description and relevant docs. Receive and list the generated test scenarios (at least 3-5, covering nominal, boundary, and failure cases). Prioritize them for sequential implementation. Output under [Step 3: Test Scenarios]. CoT: Validate that scenarios align with requirements and suggest any additions if needed.
-
+3. **Create Test Scenarios**: Invoke the writetests subagent, providing the subtask description and relevant docs. Receive and list a risk-driven set of test scenarios (covering nominal, boundary, and failure cases). Prioritize them for sequential implementation. Output under [Step 3: Test Scenarios]. Validate alignment with requirements and suggest additions if needed.
 4. **Implement via TDD**: Proceed one test at a time. For each:
    - Select the next scenario.
    - Write the test code.
@@ -37,7 +36,7 @@ Now, execute the following workflow step-by-step:
    graph TD
     A[Start] --> B[Step 1: Find Next Subtask from .ai/docs/tasks.md]
     B --> C[Step 2: Call agent-context7-docs-searcher for Documentation]
-    C --> D[Step 3: Call test-scenario-creator for Test Scenarios]
+    C --> D[Step 3: Call writetests for Test Scenarios]
     D --> E[Step 4: Implement using Canonical TDD Methodology]
     E --> F{For Each Test Scenario}
     F -->|One at a Time| G[Write Failing Test (Red Phase)]

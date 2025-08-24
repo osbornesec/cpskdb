@@ -1,6 +1,4 @@
-"""
-Base test functionality for Docker Compose Qdrant tests
-"""
+"""Base test functionality for Docker Compose Qdrant tests."""
 
 import subprocess
 import time
@@ -11,11 +9,11 @@ import requests  # type: ignore
 
 
 class QdrantDockerComposeTestBase(unittest.TestCase):
-    """Base class for Qdrant Docker Compose tests"""
+    """Base class for Qdrant Docker Compose tests."""
 
     @staticmethod
-    def create_basic_compose_content():
-        """Create basic docker-compose.yml content for Qdrant"""
+    def create_basic_compose_content() -> str:
+        """Create basic docker-compose.yml content for Qdrant."""
         return """
 version: '3.8'
 services:
@@ -34,8 +32,8 @@ volumes:
 """
 
     @staticmethod
-    def create_production_compose_content():
-        """Create production-like docker-compose.yml content"""
+    def create_production_compose_content() -> str:
+        """Create production-like docker-compose.yml content."""
         return """
 version: '3.8'
 
@@ -70,30 +68,30 @@ volumes:
 """
 
     def setup_compose_file(self, compose_content, temp_dir):
-        """Setup docker-compose file in temporary directory"""
+        """Setup docker-compose file in temporary directory."""
         compose_file = Path(temp_dir) / "docker-compose.yml"
         compose_file.write_text(compose_content)
         return compose_file
 
     def start_qdrant_service(self, compose_file, temp_dir, service_name="qdrant"):
-        """Start Qdrant service using docker-compose"""
-        result = subprocess.run(
+        """Start Qdrant service using docker-compose."""
+        return subprocess.run(
             ["docker", "compose", "-f", str(compose_file), "up", service_name, "-d"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=temp_dir,
         )
-        return result
 
     def stop_qdrant_service(self, compose_file, temp_dir, remove_volumes=True):
-        """Stop and cleanup Qdrant service"""
+        """Stop and cleanup Qdrant service."""
         cmd = ["docker", "compose", "-f", str(compose_file), "down"]
         if remove_volumes:
             cmd.append("-v")
-        subprocess.run(cmd, capture_output=True, cwd=temp_dir)
+        subprocess.run(cmd, check=False, capture_output=True, cwd=temp_dir)
 
     def wait_for_qdrant_ready(self, timeout=30):
-        """Wait for Qdrant service to be ready"""
+        """Wait for Qdrant service to be ready."""
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
@@ -106,74 +104,64 @@ volumes:
         return False
 
     def assert_qdrant_healthy(self):
-        """Assert that Qdrant service is healthy"""
+        """Assert that Qdrant service is healthy."""
         response = requests.get("http://localhost:6333/healthz", timeout=10)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Handle both JSON and plain text responses
         try:
             json_data = response.json()
             if "status" in json_data:
-                self.assertIn(json_data.get("status"), ["ok", "healthy"])
+                assert json_data.get("status") in ["ok", "healthy"]
             else:
                 # Check for any truthy health indicator
-                self.assertTrue(
-                    any(json_data.values()),
-                    "Health check JSON should contain truthy values",
-                )
+                assert any(json_data.values()), "Health check JSON should contain truthy values"
         except (ValueError, requests.exceptions.JSONDecodeError):
             # Fallback to text response - check for common health indicators
             response_text = response.text.lower()
             health_indicators = ["ok", "health", "ready"]
-            self.assertTrue(
-                any(indicator in response_text for indicator in health_indicators),
-                f"Health check response should contain health indicators. Got: {response.text[:100]}",
-            )
+            assert any(indicator in response_text for indicator in health_indicators), f"Health check response should contain health indicators. Got: {response.text[:100]}"
 
     def create_test_collection(self, collection_name="test_collection", vector_size=4):
-        """Create a test collection in Qdrant"""
+        """Create a test collection in Qdrant."""
         test_data = {"vectors": {"size": vector_size, "distance": "Cosine"}}
         response = requests.put(
             f"http://localhost:6333/collections/{collection_name}",
             json=test_data,
             timeout=10,
         )
-        self.assertIn(response.status_code, [200, 201])
+        assert response.status_code in [200, 201]
         return response
 
     def verify_collection_exists(self, collection_name="test_collection"):
-        """Verify that a collection exists and is accessible"""
+        """Verify that a collection exists and is accessible."""
         response = requests.get(
             f"http://localhost:6333/collections/{collection_name}", timeout=10
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         return response
 
     def create_snapshot(self, collection_name="test_collection"):
-        """Create a snapshot via Qdrant API and return the response"""
+        """Create a snapshot via Qdrant API and return the response."""
         try:
             response = requests.post(
                 f"http://localhost:6333/collections/{collection_name}/snapshots",
                 timeout=30,
             )
-            self.assertIn(
-                response.status_code,
-                [200, 201],
-                f"Snapshot creation failed with status {response.status_code}: {response.text}",
-            )
+            assert response.status_code in [200, 201], f"Snapshot creation failed with status {response.status_code}: {response.text}"
         except requests.exceptions.RequestException as e:
             self.fail(f"Failed to create snapshot: {e}")
         return response
 
     def list_snapshots_host_dir(self, host_dir):
-        """List snapshot files in the host directory"""
+        """List snapshot files in the host directory."""
         snapshots_path = Path(host_dir) / "snapshots"
         if not snapshots_path.exists():
             return []
         return list(snapshots_path.glob("*.snapshot"))
 
     def measure_startup_time(self, compose_file, temp_dir):
-        """Measure container startup time using time.perf_counter()"""
+        """Measure container startup time using time.perf_counter()."""
         start_time = time.perf_counter()
         result = self.start_qdrant_service(compose_file, temp_dir)
         if result.returncode != 0:
@@ -186,7 +174,7 @@ volumes:
         return startup_time, ready
 
     def measure_api_latency(self, endpoint="/healthz", num_requests=5):
-        """Measure average API response times"""
+        """Measure average API response times."""
         latencies = []
         for _ in range(num_requests):
             start_time = time.perf_counter()

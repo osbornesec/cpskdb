@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose configuration edge cases.
+"""Tests for Qdrant Docker Compose configuration edge cases.
 
 This module tests configuration-related edge cases including empty directories,
 environment variable combinations, and rapid configuration changes.
@@ -16,20 +15,20 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeConfigEdgeCases(QdrantDockerComposeTestBase):
-    """Test Qdrant configuration edge cases via Docker Compose"""
+    """Test Qdrant configuration edge cases via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_empty_configuration_directory_handling(self):
-        """Test Qdrant handles empty configuration directory scenario"""
+        """Test Qdrant handles empty configuration directory scenario."""
         # Create compose with minimal configuration
         compose_content_minimal = """
 version: '3.8'
@@ -54,24 +53,24 @@ volumes:
 
         # Start service
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         # Wait for service to be ready
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         # Verify service starts with default configuration
         response = requests.get("http://localhost:6333/", timeout=30)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Check telemetry works with minimal config
         telemetry_response = requests.get("http://localhost:6333/telemetry", timeout=30)
-        self.assertEqual(telemetry_response.status_code, 200)
+        assert telemetry_response.status_code == 200
 
         # Stop service
         self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_configuration_updates_through_environment_variables(self):
-        """Test dynamic configuration updates via environment variables"""
+        """Test dynamic configuration updates via environment variables."""
         compose_content_env_update = """
 version: '3.8'
 services:
@@ -96,12 +95,13 @@ volumes:
 
         # Start service
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Get initial logs
         _ = subprocess.run(
             ["docker", "logs", "test_qdrant_config_update"],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -135,18 +135,18 @@ volumes:
 
         # Restart with updated configuration
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Verify service responds after configuration change
         response = requests.get("http://localhost:6333/", timeout=30)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Stop service
         self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_unusual_network_configuration_scenarios(self):
-        """Test unusual network configuration scenarios"""
+        """Test unusual network configuration scenarios."""
         compose_content_unusual_network = """
 version: '3.8'
 services:
@@ -183,20 +183,20 @@ volumes:
 
         # Start service with custom network
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         # Wait for service to be ready
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         # Verify service works with custom network configuration
         response = requests.get("http://localhost:6333/", timeout=30)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Stop service
         self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_rapid_configuration_changes(self):
-        """Test rapid configuration changes and service stability"""
+        """Test rapid configuration changes and service stability."""
         base_compose = """
 version: '3.8'
 services:
@@ -228,12 +228,12 @@ volumes:
                 )
 
             result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-            self.assertEqual(result.returncode, 0)
-            self.assertTrue(self.wait_for_qdrant_ready(max_wait=30))
+            assert result.returncode == 0
+            assert self.wait_for_qdrant_ready(max_wait=30)
 
             # Verify service responds after each configuration change
             response = requests.get("http://localhost:6333/", timeout=30)
-            self.assertEqual(response.status_code, 200)
+            assert response.status_code == 200
 
             # Brief pause between changes
             time.sleep(2)
@@ -242,7 +242,7 @@ volumes:
         self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_edge_case_environment_variable_combinations(self):
-        """Test edge case combinations of environment variables"""
+        """Test edge case combinations of environment variables."""
         compose_content_complex_env = """
 version: '3.8'
 services:
@@ -272,18 +272,18 @@ volumes:
 
         # Start service with complex environment configuration
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         # Wait longer for service due to verbose logging and optimizations
-        self.assertTrue(self.wait_for_qdrant_ready(max_wait=90))
+        assert self.wait_for_qdrant_ready(max_wait=90)
 
         # Verify service responds despite complex configuration
         response = requests.get("http://localhost:6333/", timeout=30)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Test telemetry with complex configuration
         telemetry_response = requests.get("http://localhost:6333/telemetry", timeout=30)
-        self.assertEqual(telemetry_response.status_code, 200)
+        assert telemetry_response.status_code == 200
 
         # Stop service
         self.stop_qdrant_service(self.compose_file, self.temp_dir)

@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose container edge cases.
+"""Tests for Qdrant Docker Compose container edge cases.
 
 This module implements container-specific edge cases including naming,
 environment variables, and restart behavior.
@@ -39,8 +38,8 @@ services:
 
         # This should succeed with a reasonable long name
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
     def test_special_characters_in_environment_variables(self):
         """Test Docker Compose with special characters in environment variables."""
@@ -62,9 +61,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_container_restart_with_data_integrity(self):
         """Test container restart and data integrity edge cases."""
@@ -85,9 +84,9 @@ services:
 
         self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         # Create a collection and add data
         collection_name = "test_collection"
@@ -98,7 +97,7 @@ services:
             json=collection_data,
             timeout=10,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Add some points
         points_data = {
@@ -116,18 +115,19 @@ services:
             json=points_data,
             timeout=10,
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Stop and remove container (but preserve volumes)
         subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "down"],
+            check=False,
             capture_output=True,
             cwd=self.temp_dir,
         )
         # Start again (volumes should persist)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Data should still be there
         self.verify_collection_exists(collection_name)
@@ -155,9 +155,9 @@ services:
 
             self.setup_compose_file(compose_content)
             result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-            self.assertEqual(result.returncode, 0)
+            assert result.returncode == 0
 
-            self.assertTrue(self.wait_for_qdrant_ready())
+            assert self.wait_for_qdrant_ready()
 
         finally:
             # Clean up environment variables

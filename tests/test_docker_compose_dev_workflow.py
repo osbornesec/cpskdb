@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose developer workflow functionality.
+"""Tests for Qdrant Docker Compose developer workflow functionality.
 
 This module implements developer workflow testing for scenarios
 "Complete Qdrant Development Workflow" and "Developer Onboarding Workflow"
@@ -26,15 +25,15 @@ VECTOR_VAL_B = 0.2
 
 
 class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
-    """Test Qdrant development workflow functionality via Docker Compose"""
+    """Test Qdrant development workflow functionality via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
@@ -47,22 +46,22 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
                 logger.warning(f"Failed to remove temp dir {self.temp_dir}: {e}")
 
     def test_complete_developer_setup_from_fresh_environment(self):
-        """Test complete developer setup from fresh environment"""
+        """Test complete developer setup from fresh environment."""
         compose_content = self.create_development_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
 
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         response = requests.get("http://localhost:6333/healthz", timeout=10)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         collections_response = requests.get(
             "http://localhost:6333/collections", timeout=10
         )
-        self.assertEqual(collections_response.status_code, 200)
+        assert collections_response.status_code == 200
 
         collection_config = {"vectors": {"size": 4, "distance": "Cosine"}}
         create_response = requests.put(
@@ -70,33 +69,33 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
             json=collection_config,
             timeout=10,
         )
-        self.assertIn(create_response.status_code, [200, 201])
+        assert create_response.status_code in [200, 201]
 
     def test_immediate_working_qdrant_environment(self):
-        """Test immediate working Qdrant environment"""
+        """Test immediate working Qdrant environment."""
         compose_content = self.create_development_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
 
         start_time = time.monotonic()
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         ready_success = self.wait_for_qdrant_ready(timeout=30)
         setup_time = time.monotonic() - start_time
 
-        self.assertTrue(ready_success)
-        self.assertLess(setup_time, 60, "Environment should be ready quickly")
+        assert ready_success
+        assert setup_time < 60, "Environment should be ready quickly"
 
         response = requests.get("http://localhost:6333/healthz", timeout=5)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_basic_vector_operations_workflow(self):
-        """Test basic vector operations workflow"""
+        """Test basic vector operations workflow."""
         compose_content = self.create_development_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         collection_config = {"vectors": {"size": VECTOR_DIM, "distance": "Cosine"}}
         create_response = requests.put(
@@ -104,7 +103,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
             json=collection_config,
             timeout=10,
         )
-        self.assertIn(create_response.status_code, [200, 201])
+        assert create_response.status_code in [200, 201]
 
         vector_data = {
             "points": [
@@ -126,7 +125,7 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
             json=vector_data,
             timeout=10,
         )
-        self.assertIn(upsert_response.status_code, [200, 201])
+        assert upsert_response.status_code in [200, 201]
 
         search_query = {
             "vector": [0.15] * VECTOR_DIM,
@@ -139,11 +138,11 @@ class TestQdrantDockerComposeDevWorkflow(QdrantDockerComposeTestBase):
             json=search_query,
             timeout=10,
         )
-        self.assertEqual(search_response.status_code, 200)
+        assert search_response.status_code == 200
 
         search_results = search_response.json()
-        self.assertIn("result", search_results)
-        self.assertGreater(len(search_results["result"]), 0)
+        assert "result" in search_results
+        assert len(search_results["result"]) > 0
 
 
 if __name__ == "__main__":
