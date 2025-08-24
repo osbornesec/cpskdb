@@ -39,9 +39,9 @@ repos:
           - types-requests
           - pytest
           # Additional type stubs for project dependencies
-          - types-python-dotenv
+          # Note: python-dotenv includes built-in type support, no separate stub package needed
           # FastAPI ecosystem types (included in fastapi[standard])
-          
+
   # Security scanning
   - repo: https://github.com/PyCQA/bandit
     rev: '1.7.5'
