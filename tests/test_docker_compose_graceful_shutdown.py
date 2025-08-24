@@ -1,13 +1,13 @@
-"""
-Tests for Qdrant Docker Compose graceful shutdown scenarios.
+"""Tests for Qdrant Docker Compose graceful shutdown scenarios.
 
 This module implements graceful shutdown, signal handling, and state preservation tests.
 """
 
 import subprocess
 import time
-import requests  # type: ignore
 import unittest
+
+import requests  # type: ignore
 
 from tests.test_docker_compose_extended_base import QdrantDockerComposeExtendedTestBase
 
@@ -37,21 +37,22 @@ services:
 """
 
     def test_graceful_shutdown_preserves_connections(self):
-        """Test graceful shutdown with active connections"""
+        """Test graceful shutdown with active connections."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Verify service is responding
         response = requests.get("http://localhost:6333/healthz", timeout=10)
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Stop the service
         stop_start_time = time.time()
         stop_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "stop"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
@@ -59,34 +60,33 @@ services:
         )
         shutdown_duration = time.time() - stop_start_time
 
-        self.assertEqual(stop_result.returncode, 0)
+        assert stop_result.returncode == 0
         # Assert shutdown completed within grace period
-        self.assertLessEqual(
-            shutdown_duration, 35.0, "Shutdown should complete within grace period"
-        )
+        assert shutdown_duration <= 35.0, "Shutdown should complete within grace period"
 
     def test_container_exits_with_zero_code_graceful_shutdown(self):
-        """Test container exits with zero code on graceful shutdown"""
+        """Test container exits with zero code on graceful shutdown."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         stop_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "stop"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
         )
-        self.assertEqual(stop_result.returncode, 0)
+        assert stop_result.returncode == 0
 
         # Wait for container state to be updated after stop (fix race condition)
         max_retries = 10
         retry_delay = 0.5
         exit_code = None
 
-        for attempt in range(max_retries):
+        for _attempt in range(max_retries):
             inspect_result = subprocess.run(
                 [
                     "docker",
@@ -94,6 +94,7 @@ services:
                     "test_qdrant_production",
                     "--format={{.State.ExitCode}}",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
             )
@@ -109,20 +110,16 @@ services:
             time.sleep(retry_delay)
 
         # Assert we got a valid exit code and it's 0 (success)
-        self.assertIsNotNone(
-            exit_code, "Failed to get container exit code after multiple retries"
-        )
-        self.assertEqual(
-            exit_code, 0, f"Container should exit with code 0, got: {exit_code}"
-        )
+        assert exit_code is not None, "Failed to get container exit code after multiple retries"
+        assert exit_code == 0, f"Container should exit with code 0, got: {exit_code}"
 
     def test_data_integrity_maintained_after_graceful_shutdown(self):
-        """Test data integrity maintained after graceful shutdown"""
+        """Test data integrity maintained after graceful shutdown."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Create a collection and add some data
         collection_data = {"vectors": {"size": 128, "distance": "Cosine"}}
@@ -150,38 +147,39 @@ services:
         # Graceful shutdown
         stop_result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "stop"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
         )
-        self.assertEqual(stop_result.returncode, 0)
+        assert stop_result.returncode == 0
 
         # Restart and verify data
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Verify collection exists
         response = requests.get(
             "http://localhost:6333/collections/test_shutdown", timeout=10
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
         # Verify vector exists
         response = requests.get(
             "http://localhost:6333/collections/test_shutdown/points/1", timeout=10
         )
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         data = response.json()
-        self.assertEqual(data["result"]["payload"]["shutdown_test"], True)
+        assert data["result"]["payload"]["shutdown_test"]
 
     def test_signal_handling_edge_cases(self):
-        """Test various signal handling scenarios"""
+        """Test various signal handling scenarios."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Verify container is running
         inspect_result = subprocess.run(
@@ -191,14 +189,16 @@ services:
                 "test_qdrant_production",
                 "--format={{.State.Running}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(inspect_result.stdout.strip(), "true")
+        assert inspect_result.stdout.strip() == "true"
 
         # Send SIGTERM directly to container
         subprocess.run(
             ["docker", "kill", "--signal=SIGTERM", "test_qdrant_production"],
+            check=False,
             capture_output=True,
         )
 
@@ -213,16 +213,18 @@ services:
                 "test_qdrant_production",
                 "--format={{.State.Running}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
 
         # Container should have stopped gracefully
-        self.assertIn(inspect_result.stdout.strip(), ["false", ""])
+        assert inspect_result.stdout.strip() in ["false", ""]
 
         # Check if logs contain graceful shutdown messages
         logs_result = subprocess.run(
             ["docker", "logs", "test_qdrant_production"],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -243,10 +245,7 @@ services:
         )
 
         # Assert either explicit shutdown message or clean exit
-        self.assertTrue(
-            has_shutdown_log or logs_result.returncode == 0,
-            f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:500]}...",
-        )
+        assert has_shutdown_log or logs_result.returncode == 0, f"Expected shutdown indication in logs or clean exit. Logs: {log_content[:500]}..."
 
 
 if __name__ == "__main__":

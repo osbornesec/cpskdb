@@ -1,16 +1,12 @@
-"""
-Utility functions for path resolution and project root detection.
-"""
+"""Utility functions for path resolution and project root detection."""
 
+import os
 import subprocess
 from pathlib import Path
-from typing import Optional
-import os
 
 
-def find_project_root() -> Optional[Path]:
-    """
-    Find the project root by searching upwards for a .claude directory.
+def find_project_root() -> Path | None:
+    """Find the project root by searching upwards for a .claude directory.
     The project root is defined as the directory containing the .claude folder.
     """
     current_path = Path(__file__).parent.resolve()
@@ -27,6 +23,7 @@ def find_project_root() -> Optional[Path]:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=5,
@@ -42,17 +39,13 @@ def find_project_root() -> Optional[Path]:
     return None
 
 
-def resolve_file_path(file_path: str, project_root: Path) -> Optional[Path]:
-    """
-    Resolve a file path to an absolute, canonical path, ensuring it's within the project root.
+def resolve_file_path(file_path: str, project_root: Path) -> Path | None:
+    """Resolve a file path to an absolute, canonical path, ensuring it's within the project root.
     This function securely handles symlinks and prevents directory traversal.
     Returns the resolved Path object if valid and existing, otherwise None.
     """
     # Create an absolute path from the file_path and project_root
-    if os.path.isabs(file_path):
-        p = Path(file_path)
-    else:
-        p = project_root / file_path
+    p = Path(file_path) if os.path.isabs(file_path) else project_root / file_path
 
     # Get the canonical path, which resolves any symlinks
     try:

@@ -1,9 +1,9 @@
-"""
-Base class for extended Docker Compose edge case tests.
+"""Base class for extended Docker Compose edge case tests.
 
 This module provides common functionality for all extended edge case test modules.
 """
 
+import contextlib
 import shutil
 import subprocess
 import tempfile
@@ -24,14 +24,13 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test environment."""
-        try:
+        with contextlib.suppress(Exception):
             subprocess.run(
                 ["docker", "compose", "-f", str(self.compose_file), "down", "-v"],
+                check=False,
                 capture_output=True,
                 cwd=self.temp_dir,
             )
-        except Exception:
-            pass
 
         # Force cleanup any remaining containers
         self.force_cleanup_containers()
@@ -52,6 +51,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         """Start Qdrant service using Docker Compose."""
         return subprocess.run(
             ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+            check=False,
             capture_output=True,
             cwd=cwd,
         )
@@ -81,8 +81,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             return False
 
     def wait_for_port_available(self, port: int = 6333, timeout: int = 10) -> bool:
-        """
-        Wait for a port to become available.
+        """Wait for a port to become available.
 
         Note: There's an inherent race condition between checking port availability
         and actually binding to it. Callers should implement retry logic if needed.
@@ -106,26 +105,36 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
             # First, try to stop containers by port
             result = subprocess.run(
                 ["docker", "ps", "--filter", "publish=6333", "--format", "{{.Names}}"],
+                check=False,
                 capture_output=True,
                 text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
                 container_names = result.stdout.strip().split("\n")
                 for name in container_names:
-                    subprocess.run(["docker", "stop", name], capture_output=True)
-                    subprocess.run(["docker", "rm", name], capture_output=True)
+                    subprocess.run(
+                        ["docker", "stop", name], check=False, capture_output=True
+                    )
+                    subprocess.run(
+                        ["docker", "rm", name], check=False, capture_output=True
+                    )
 
             # Also try to stop containers by name pattern (e.g., containing "qdrant")
             result = subprocess.run(
                 ["docker", "ps", "--filter", "name=qdrant", "--format", "{{.Names}}"],
+                check=False,
                 capture_output=True,
                 text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
                 container_names = result.stdout.strip().split("\n")
                 for name in container_names:
-                    subprocess.run(["docker", "stop", name], capture_output=True)
-                    subprocess.run(["docker", "rm", name], capture_output=True)
+                    subprocess.run(
+                        ["docker", "stop", name], check=False, capture_output=True
+                    )
+                    subprocess.run(
+                        ["docker", "rm", name], check=False, capture_output=True
+                    )
         except Exception:
             pass
 
@@ -134,6 +143,7 @@ class QdrantDockerComposeExtendedTestBase(unittest.TestCase):
         try:
             result = subprocess.run(
                 ["docker", "inspect", container_name, "--format={{.RestartCount}}"],
+                check=False,
                 capture_output=True,
                 text=True,
             )

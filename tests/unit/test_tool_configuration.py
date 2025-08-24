@@ -23,49 +23,49 @@ def test_ruff_section_exists_with_basic_configuration(pyproject_data):
     """Test that [tool.ruff] section exists with basic configuration."""
     # Test that [tool.ruff] section exists
     assert "tool" in pyproject_data, "Missing [tool] section in pyproject.toml"
-    assert (
-        "ruff" in pyproject_data["tool"]
-    ), "Missing [tool.ruff] section in pyproject.toml"
+    assert "ruff" in pyproject_data["tool"], (
+        "Missing [tool.ruff] section in pyproject.toml"
+    )
 
     ruff_config = pyproject_data["tool"]["ruff"]
 
     # Validate basic settings exist
     assert "line-length" in ruff_config, "Missing line-length setting in [tool.ruff]"
-    assert (
-        "target-version" in ruff_config
-    ), "Missing target-version setting in [tool.ruff]"
+    assert "target-version" in ruff_config, (
+        "Missing target-version setting in [tool.ruff]"
+    )
 
     # Validate basic setting values
     line_length = ruff_config["line-length"]
     assert isinstance(line_length, int), "line-length must be an integer"
-    assert (
-        79 <= line_length <= 120
-    ), f"line-length {line_length} should be between 79-120 characters"
+    assert 79 <= line_length <= 120, (
+        f"line-length {line_length} should be between 79-120 characters"
+    )
 
     target_version = ruff_config["target-version"]
     assert isinstance(target_version, str), "target-version must be a string"
-    assert target_version.startswith(
-        "py3"
-    ), f"target-version {target_version} should be Python 3.x"
+    assert target_version.startswith("py3"), (
+        f"target-version {target_version} should be Python 3.x"
+    )
 
 
 def test_mypy_section_exists_with_fastapi_configuration(pyproject_data):
     """Test that [tool.mypy] section exists with FastAPI/async-specific configuration."""
     # Test that [tool.mypy] section exists
     assert "tool" in pyproject_data, "Missing [tool] section in pyproject.toml"
-    assert (
-        "mypy" in pyproject_data["tool"]
-    ), "Missing [tool.mypy] section in pyproject.toml"
+    assert "mypy" in pyproject_data["tool"], (
+        "Missing [tool.mypy] section in pyproject.toml"
+    )
 
     mypy_config = pyproject_data["tool"]["mypy"]
 
     # Validate essential async/FastAPI settings
-    assert (
-        "python_version" in mypy_config
-    ), "Missing python_version setting in [tool.mypy]"
-    assert (
-        "strict" in mypy_config or "disallow_untyped_defs" in mypy_config
-    ), "Missing strict type checking configuration"
+    assert "python_version" in mypy_config, (
+        "Missing python_version setting in [tool.mypy]"
+    )
+    assert "strict" in mypy_config or "disallow_untyped_defs" in mypy_config, (
+        "Missing strict type checking configuration"
+    )
 
     # Validate Python version compatibility
     python_version = mypy_config["python_version"]
@@ -98,9 +98,9 @@ def test_tool_sections_have_non_conflicting_configurations(pyproject_data):
     black_line_length = black_config.get("line-length")
 
     if ruff_line_length and black_line_length:
-        assert (
-            ruff_line_length == black_line_length
-        ), f"Line length mismatch: ruff={ruff_line_length}, black={black_line_length}"
+        assert ruff_line_length == black_line_length, (
+            f"Line length mismatch: ruff={ruff_line_length}, black={black_line_length}"
+        )
 
     # Test Python version consistency between tools
     ruff_version = ruff_config.get("target-version", "").replace("py", "")
@@ -113,9 +113,9 @@ def test_tool_sections_have_non_conflicting_configurations(pyproject_data):
         else:
             ruff_comparable = ruff_version
 
-        assert (
-            ruff_comparable == mypy_version
-        ), f"Python version mismatch: ruff={ruff_comparable}, mypy={mypy_version}"
+        assert ruff_comparable == mypy_version, (
+            f"Python version mismatch: ruff={ruff_comparable}, mypy={mypy_version}"
+        )
 
     # Test that project requires-python is compatible with tool configurations
     project_python = pyproject_data.get("project", {}).get("requires-python", "")
@@ -126,9 +126,9 @@ def test_tool_sections_have_non_conflicting_configurations(pyproject_data):
         match = re.search(r"(\d+\.\d+)", project_python)
         if match:
             min_version = match.group(1)
-            assert (
-                mypy_version >= min_version
-            ), f"MyPy version {mypy_version} is below project minimum {min_version}"
+            assert mypy_version >= min_version, (
+                f"MyPy version {mypy_version} is below project minimum {min_version}"
+            )
 
 
 def test_development_tool_dependencies_match_configuration(pyproject_data):
@@ -145,21 +145,21 @@ def test_development_tool_dependencies_match_configuration(pyproject_data):
 
     # Test ruff dependency
     if "ruff" in tool_config:
-        assert (
-            "ruff" in dep_names
-        ), "ruff configured in [tool.ruff] but missing from dev dependencies"
+        assert "ruff" in dep_names, (
+            "ruff configured in [tool.ruff] but missing from dev dependencies"
+        )
 
     # Test mypy dependency
     if "mypy" in tool_config:
-        assert (
-            "mypy" in dep_names
-        ), "mypy configured in [tool.mypy] but missing from dev dependencies"
+        assert "mypy" in dep_names, (
+            "mypy configured in [tool.mypy] but missing from dev dependencies"
+        )
 
     # Test black dependency (if configured)
     if "black" in tool_config:
-        assert (
-            "black" in dep_names
-        ), "black configured in [tool.black] but missing from dev dependencies"
+        assert "black" in dep_names, (
+            "black configured in [tool.black] but missing from dev dependencies"
+        )
 
     # Check version compatibility for key tools
     for dep in dev_deps:
@@ -172,9 +172,9 @@ def test_development_tool_dependencies_match_configuration(pyproject_data):
                 min_version = version_match.group(1)
                 # Ensure minimum version supports modern features
                 major, minor = map(int, min_version.split("."))
-                assert (
-                    major > 0 or minor >= 1
-                ), f"ruff version {min_version} too old for modern features"
+                assert major > 0 or minor >= 1, (
+                    f"ruff version {min_version} too old for modern features"
+                )
 
 
 def test_fastapi_async_mypy_configuration_optimization(pyproject_data):
@@ -182,14 +182,14 @@ def test_fastapi_async_mypy_configuration_optimization(pyproject_data):
     mypy_config = pyproject_data.get("tool", {}).get("mypy", {})
 
     # Test strict typing for FastAPI dependency injection
-    assert (
-        mypy_config.get("disallow_untyped_defs") is True
-    ), "disallow_untyped_defs should be True for FastAPI type safety"
+    assert mypy_config.get("disallow_untyped_defs") is True, (
+        "disallow_untyped_defs should be True for FastAPI type safety"
+    )
 
     # Test optional handling for async patterns
-    assert (
-        mypy_config.get("strict_optional") is True
-    ), "strict_optional should be True for proper async None handling"
+    assert mypy_config.get("strict_optional") is True, (
+        "strict_optional should be True for proper async None handling"
+    )
 
     # Test that additional async-friendly options are present
     recommended_async_options = {
@@ -214,6 +214,6 @@ def test_fastapi_async_mypy_configuration_optimization(pyproject_data):
         version_parts = python_version.split(".")
         if len(version_parts) >= 2:
             major, minor = int(version_parts[0]), int(version_parts[1])
-            assert (
-                (major == 3 and minor >= 11) or major > 3
-            ), f"Python {python_version} lacks modern async features (need 3.11+)"
+            assert (major == 3 and minor >= 11) or major > 3, (
+                f"Python {python_version} lacks modern async features (need 3.11+)"
+            )

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Filter LanguageTool results to focus on actual writing issues.
-"""
+"""Filter LanguageTool results to focus on actual writing issues."""
 
 import sys
 from pathlib import Path
@@ -20,7 +18,7 @@ def load_personal_dictionary() -> set:
 
     if dict_file.exists():
         try:
-            with open(dict_file, "r", encoding="utf-8") as f:
+            with open(dict_file, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     # Skip empty lines and comments
@@ -78,10 +76,7 @@ def should_ignore_rule(rule_id: str, message: str, text: str) -> bool:
         return True
 
     # Ignore very short text snippets (likely code)
-    if len(text.strip()) <= 3:
-        return True
-
-    return False
+    return len(text.strip()) <= 3
 
 
 def check_text_filtered(text: str, tool, file_path: str = "") -> list:
@@ -116,7 +111,7 @@ def check_text_filtered(text: str, tool, file_path: str = "") -> list:
         return []
 
 
-def main():
+def main() -> None:
     """Run filtered LanguageTool check on main documentation."""
     print("Running filtered LanguageTool check...")
 
@@ -143,7 +138,7 @@ def main():
 
         print(f"Checking {file_path}...")
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             issues = check_text_filtered(content, tool, file_path)

@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose error message validation.
+"""Tests for Qdrant Docker Compose error message validation.
 
 This module implements comprehensive error message validation for scenarios
 "Qdrant Provides Meaningful Error Messages" and "Qdrant Health Check Failure Messages"
@@ -17,20 +16,20 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeErrorMessages(QdrantDockerComposeTestBase):
-    """Test Qdrant error message clarity via Docker Compose"""
+    """Test Qdrant error message clarity via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_volume_mount_error(self):
-        """Test volume mount error messages"""
+        """Test volume mount error messages."""
         compose_content = """
 version: '3.8'
 services:
@@ -44,25 +43,20 @@ services:
 """
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertNotEqual(result.returncode, 0, "Docker compose should fail")
+        assert result.returncode != 0, "Docker compose should fail"
         error_output = result.stderr + result.stdout
-        self.assertTrue(
-            any(
-                term in error_output.lower()
-                for term in ["volume", "mount", "nonexistent", "path"]
-            ),
-            f"Error message should mention volume/mount issues: {error_output}",
-        )
+        assert any(term in error_output.lower() for term in ["volume", "mount", "nonexistent", "path"]), f"Error message should mention volume/mount issues: {error_output}"
         # Check that the container did not start
         check_result = subprocess.run(
             ["docker", "ps", "--filter", "name=test_qdrant_volume_error"],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertNotIn("test_qdrant_volume_error", check_result.stdout)
+        assert "test_qdrant_volume_error" not in check_result.stdout
 
     def test_network_configuration_error_messages(self):
-        """Test network configuration error messages"""
+        """Test network configuration error messages."""
         invalid_network_compose = """
 version: '3.8'
 services:
@@ -81,6 +75,7 @@ services:
 
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
@@ -88,15 +83,10 @@ services:
 
         if result.returncode != 0:
             error_output = result.stderr + result.stdout
-            self.assertTrue(
-                any(
-                    term in error_output.lower()
-                    for term in ["network", "not found", "undefined"]
-                )
-            )
+            assert any(term in error_output.lower() for term in ["network", "not found", "undefined"])
 
     def test_error_messages_do_not_expose_sensitive_information(self):
-        """Test error messages do not expose sensitive information"""
+        """Test error messages do not expose sensitive information."""
         compose_with_secrets = """
 version: '3.8'
 services:
@@ -120,6 +110,7 @@ volumes:
         # Start the service to generate logs
         _ = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
@@ -147,6 +138,7 @@ volumes:
 
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "logs"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
@@ -156,11 +148,7 @@ volumes:
         sensitive_terms = ["super_secret_value_123", "secret_api_key_456"]
 
         for sensitive_term in sensitive_terms:
-            self.assertNotIn(
-                sensitive_term,
-                log_output,
-                f"Sensitive term '{sensitive_term}' found in logs",
-            )
+            assert sensitive_term not in log_output, f"Sensitive term '{sensitive_term}' found in logs"
 
     def test_invalid_collection_creation(self):
         """Test invalid collection creation error handling."""
@@ -168,8 +156,8 @@ volumes:
         compose_content = self.create_basic_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         # Test invalid collection creation
         invalid_collection_config = {
@@ -181,19 +169,13 @@ volumes:
             timeout=10,
         )
 
-        self.assertNotEqual(error_response.status_code, 200)
+        assert error_response.status_code != 200
 
         # Validate error response format
         error_json = error_response.json()
-        self.assertIn("status", error_json, "Error response should contain 'status'")
-        self.assertIn(
-            "error", error_json["status"], "Error response should contain 'error' field"
-        )
-        self.assertEqual(
-            error_json["status"]["error"],
-            "Wrong input: Invalid data type for field `vectors.size`: expected a integer, but got a string",
-            "Status should be 'error'",
-        )
+        assert "status" in error_json, "Error response should contain 'status'"
+        assert "error" in error_json["status"], "Error response should contain 'error' field"
+        assert error_json["status"]["error"] == "Wrong input: Invalid data type for field `vectors.size`: expected a integer, but got a string", "Status should be 'error'"
 
         # Test invalid search
         invalid_search = {"vector": "not_a_vector", "limit": 5}
@@ -203,18 +185,12 @@ volumes:
             timeout=10,
         )
 
-        self.assertNotEqual(search_error.status_code, 200)
+        assert search_error.status_code != 200
 
         # Validate search error response format matches collection error format
         search_error_json = search_error.json()
-        self.assertIn(
-            "status", search_error_json, "Search error should have consistent format"
-        )
-        self.assertIn(
-            "error",
-            search_error_json["status"],
-            "Search error should have consistent format",
-        )
+        assert "status" in search_error_json, "Search error should have consistent format"
+        assert "error" in search_error_json["status"], "Search error should have consistent format"
 
 
 if __name__ == "__main__":

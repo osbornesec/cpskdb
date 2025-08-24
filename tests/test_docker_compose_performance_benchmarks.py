@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose performance benchmarks.
+"""Tests for Qdrant Docker Compose performance benchmarks.
 
 This module implements performance benchmark testing for scenarios
 "Qdrant Startup Time Benchmarks", "Qdrant API Response Time Validation", and
@@ -17,7 +16,7 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
-    """Test Qdrant performance benchmarks via Docker Compose"""
+    """Test Qdrant performance benchmarks via Docker Compose."""
 
     # Configurable performance thresholds
     STARTUP_TIMEOUT_FAST = 30  # seconds for fast startup
@@ -29,41 +28,37 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
     MIN_SEARCH_SUCCESS = 8  # out of 10
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
 
     def test_production_startup_time_benchmark(self):
-        """Test production startup time benchmark"""
+        """Test production startup time benchmark."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
 
         start_time = time.monotonic()
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         ready_success = self.wait_for_qdrant_ready(timeout=60)
         total_time = time.monotonic() - start_time
 
-        self.assertTrue(ready_success)
-        self.assertLess(
-            total_time,
-            self.STARTUP_TIMEOUT_PRODUCTION,
-            "Production startup should be reasonable",
-        )
+        assert ready_success
+        assert total_time < self.STARTUP_TIMEOUT_PRODUCTION, "Production startup should be reasonable"
 
     def test_api_response_times_meet_requirements(self):
-        """Test API response times meet requirements"""
+        """Test API response times meet requirements."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         health_times = []
         for _ in range(self.TOTAL_HEALTH_CHECKS):
@@ -74,11 +69,7 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
                 health_times.append(duration)
             time.sleep(0.1)  # Small delay to avoid overwhelming the service
 
-        self.assertGreaterEqual(
-            len(health_times),
-            self.MIN_HEALTH_CHECKS,
-            f"At least {self.MIN_HEALTH_CHECKS} successful health checks are required",
-        )
+        assert len(health_times) >= self.MIN_HEALTH_CHECKS, f"At least {self.MIN_HEALTH_CHECKS} successful health checks are required"
 
         collections_times = []
         for _ in range(5):
@@ -90,17 +81,15 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
 
         if collections_times:
             avg_collections_time = sum(collections_times) / len(collections_times)
-            self.assertLess(
-                avg_collections_time, 0.2, "Collections endpoint should be fast"
-            )
+            assert avg_collections_time < 0.2, "Collections endpoint should be fast"
 
     def test_collection_operations_performance(self):
-        """Test collection operations performance"""
+        """Test collection operations performance."""
         compose_content = self.create_production_compose_content()
         self.compose_file = self.setup_compose_file(compose_content, self.temp_dir)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         collection_config = {"vectors": {"size": 128, "distance": "Cosine"}}
 
@@ -112,8 +101,8 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
         )
         create_time = time.monotonic() - start_time
 
-        self.assertIn(create_response.status_code, [200, 201])
-        self.assertLess(create_time, 5.0, "Collection creation should be fast")
+        assert create_response.status_code in [200, 201]
+        assert create_time < 5.0, "Collection creation should be fast"
 
         # Generate diverse vectors for better test coverage
         random.seed(42)  # Deterministic but diverse
@@ -144,8 +133,8 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
         )
         upsert_time = time.monotonic() - start_time
 
-        self.assertIn(upsert_response.status_code, [200, 201])
-        self.assertLess(upsert_time, 10.0, "Batch upsert should be efficient")
+        assert upsert_response.status_code in [200, 201]
+        assert upsert_time < 10.0, "Batch upsert should be efficient"
 
         # Use a more diverse search vector
         random.seed(43)  # Different seed for search vector
@@ -168,14 +157,10 @@ class TestQdrantDockerComposePerformanceBenchmarks(QdrantDockerComposeTestBase):
             if search_response.status_code == 200:
                 search_times.append(duration)
 
-        self.assertGreaterEqual(
-            len(search_times),
-            self.MIN_SEARCH_SUCCESS,
-            f"At least {self.MIN_SEARCH_SUCCESS} out of 10 searches should succeed",
-        )
+        assert len(search_times) >= self.MIN_SEARCH_SUCCESS, f"At least {self.MIN_SEARCH_SUCCESS} out of 10 searches should succeed"
         if search_times:
             avg_search_time = sum(search_times) / len(search_times)
-            self.assertLess(avg_search_time, 0.5, "Search should be fast")
+            assert avg_search_time < 0.5, "Search should be fast"
 
 
 if __name__ == "__main__":

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""
-Run LanguageTool against codebase documentation and comments.
-"""
+"""Run LanguageTool against codebase documentation and comments."""
 
-import sys
-from pathlib import Path
 import ast
+import sys
 import tokenize
+from pathlib import Path
 
 try:
     import language_tool_python  # type: ignore
@@ -71,7 +69,7 @@ def check_file_with_languagetool(file_path: str, tool) -> list:
     try:
         if file_path.endswith(".md"):
             # For Markdown files, read entire content
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             matches = tool.check(content)
@@ -111,7 +109,7 @@ def check_file_with_languagetool(file_path: str, tool) -> list:
     return issues
 
 
-def main():
+def main() -> None:
     """Run LanguageTool checks on the codebase."""
     print("Checking codebase with LanguageTool...")
 
@@ -126,7 +124,7 @@ def main():
         return
 
     # Find files to check
-    root_path = Path(".")
+    root_path = Path()
     files_to_check = []
 
     # Add all Markdown files (excluding hidden directories and cache)

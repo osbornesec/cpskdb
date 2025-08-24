@@ -2,6 +2,7 @@
 
 import tomllib
 from pathlib import Path
+
 # List import removed as it's not used in type hints
 
 
@@ -20,14 +21,16 @@ def generate_requirements(
         ValueError: If pyproject.toml is malformed
     """
     if not pyproject_path.exists():
-        raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
+        msg = f"pyproject.toml not found at {pyproject_path}"
+        raise FileNotFoundError(msg)
 
     # Read and parse pyproject.toml
     try:
         with open(pyproject_path, "rb") as f:
             config = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
-        raise ValueError(f"Invalid TOML syntax in pyproject.toml: {e}") from e
+        msg = f"Invalid TOML syntax in pyproject.toml: {e}"
+        raise ValueError(msg) from e
 
     dependencies = []
 
@@ -36,32 +39,47 @@ def generate_requirements(
     if "dependencies" in project_config:
         prod_deps = project_config["dependencies"]
         if not isinstance(prod_deps, list):
-            raise ValueError(f"project.dependencies must be a list, got {type(prod_deps)}")
-        
+            msg = f"project.dependencies must be a list, got {type(prod_deps)}"
+            raise ValueError(
+                msg
+            )
+
         # Validate each dependency is a string
         for i, dep in enumerate(prod_deps):
             if not isinstance(dep, str):
-                raise ValueError(f"project.dependencies[{i}] must be a string, got {type(dep)}")
-        
+                msg = f"project.dependencies[{i}] must be a string, got {type(dep)}"
+                raise ValueError(
+                    msg
+                )
+
         dependencies.extend(prod_deps)
 
     # Get development dependencies if requested
     if include_dev:
         optional_deps = project_config.get("optional-dependencies", {})
         if optional_deps and not isinstance(optional_deps, dict):
-            raise ValueError(f"project.optional-dependencies must be a dict, got {type(optional_deps)}")
-            
+            msg = f"project.optional-dependencies must be a dict, got {type(optional_deps)}"
+            raise ValueError(
+                msg
+            )
+
         dev_deps = optional_deps.get("dev", [])
         if dev_deps and not isinstance(dev_deps, list):
-            raise ValueError(f"project.optional-dependencies.dev must be a list, got {type(dev_deps)}")
-        
+            msg = f"project.optional-dependencies.dev must be a list, got {type(dev_deps)}"
+            raise ValueError(
+                msg
+            )
+
         # Validate each dev dependency is a string
         for i, dep in enumerate(dev_deps):
             if not isinstance(dep, str):
-                raise ValueError(f"project.optional-dependencies.dev[{i}] must be a string, got {type(dep)}")
-        
+                msg = f"project.optional-dependencies.dev[{i}] must be a string, got {type(dep)}"
+                raise ValueError(
+                    msg
+                )
+
         dependencies.extend(dev_deps)
-    
+
     # Remove duplicates while preserving order (first occurrence wins)
     unique_sorted = []
     seen = set()

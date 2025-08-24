@@ -1,6 +1,5 @@
-"""
-Test suite for Qdrant Docker Compose configuration
-Following TDD methodology for Task 99 - Configure Qdrant service (port 6333)
+"""Test suite for Qdrant Docker Compose configuration
+Following TDD methodology for Task 99 - Configure Qdrant service (port 6333).
 """
 
 import subprocess
@@ -13,10 +12,10 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerCompose(QdrantDockerComposeTestBase):
-    """Test cases for Qdrant service Docker Compose configuration"""
+    """Test cases for Qdrant service Docker Compose configuration."""
 
     def test_qdrant_service_starts_successfully(self):
-        """Test: Qdrant Service Starts Successfully"""
+        """Test: Qdrant Service Starts Successfully."""
         compose_content = """
 version: '3.8'
 services:
@@ -33,15 +32,14 @@ services:
 
             result = subprocess.run(
                 ["docker", "compose", "-f", str(compose_file), "up", "qdrant", "-d"],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=temp_dir,
             )
 
             try:
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 check_result = subprocess.run(
                     [
@@ -52,22 +50,22 @@ services:
                         "--format",
                         "{{.Status}}",
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
-                self.assertIn(
-                    "Up", check_result.stdout, "Qdrant container is not running"
-                )
+                assert "Up" in check_result.stdout, "Qdrant container is not running"
 
             finally:
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "down"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )
 
     def test_qdrant_port_accessibility_and_health_check(self):
-        """Test: Qdrant Exposes Port 6333 Correctly and Health Endpoint Returns Valid Response"""
+        """Test: Qdrant Exposes Port 6333 Correctly and Health Endpoint Returns Valid Response."""
         compose_content = """
 version: '3.8'
 services:
@@ -84,23 +82,18 @@ services:
 
             result = subprocess.run(
                 ["docker", "compose", "-f", str(compose_file), "up", "qdrant", "-d"],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=temp_dir,
             )
 
             try:
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
-                self.assertTrue(self.wait_for_qdrant_ready())
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
+                assert self.wait_for_qdrant_ready()
 
                 response = requests.get("http://localhost:6333/healthz", timeout=10)
-                self.assertEqual(
-                    response.status_code,
-                    200,
-                    f"Health check failed: {response.status_code}",
-                )
+                assert response.status_code == 200, f"Health check failed: {response.status_code}"
                 # Use proper assertion method instead of assert
                 health_response_valid = any(
                     [
@@ -110,20 +103,18 @@ services:
                         response.status_code == 200,
                     ]
                 )
-                self.assertTrue(
-                    health_response_valid,
-                    f"Unexpected health response: {response.text}",
-                )
+                assert health_response_valid, f"Unexpected health response: {response.text}"
 
             finally:
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "down"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )
 
     def test_qdrant_storage_volume_persistence(self):
-        """Test: Qdrant Storage Volume Mounts Correctly"""
+        """Test: Qdrant Storage Volume Mounts Correctly."""
         compose_content = """
 version: '3.8'
 services:
@@ -153,13 +144,12 @@ volumes:
                         "qdrant",
                         "-d",
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                     cwd=temp_dir,
                 )
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
                 self.wait_for_qdrant_ready()
 
                 test_data = {"vectors": {"size": 4, "distance": "Cosine"}}
@@ -168,14 +158,11 @@ volumes:
                     json=test_data,
                     timeout=10,
                 )
-                self.assertIn(
-                    create_response.status_code,
-                    [200, 201],
-                    f"Failed to create collection: {create_response.status_code}",
-                )
+                assert create_response.status_code in [200, 201], f"Failed to create collection: {create_response.status_code}"
 
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "restart", "qdrant"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )
@@ -184,20 +171,15 @@ volumes:
                 get_response = requests.get(
                     "http://localhost:6333/collections/test_collection", timeout=10
                 )
-                self.assertEqual(
-                    get_response.status_code,
-                    200,
-                    f"Collection not found after restart: {get_response.status_code}",
-                )
+                assert get_response.status_code == 200, f"Collection not found after restart: {get_response.status_code}"
 
                 collection_info = get_response.json()
-                self.assertEqual(
-                    collection_info["result"]["config"]["params"]["vectors"]["size"], 4
-                )
+                assert collection_info["result"]["config"]["params"]["vectors"]["size"] == 4
 
             finally:
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "down", "-v"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )

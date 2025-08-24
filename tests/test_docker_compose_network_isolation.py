@@ -1,5 +1,4 @@
-"""
-Test Qdrant Docker Compose network isolation scenarios.
+"""Test Qdrant Docker Compose network isolation scenarios.
 
 This module implements network isolation testing including multi-stack isolation
 and security-focused network configurations.
@@ -16,15 +15,15 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeNetworkIsolation(QdrantDockerComposeTestBase):
-    """Test Qdrant network isolation functionality via Docker Compose"""
+    """Test Qdrant network isolation functionality via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
         if self.temp_dir:
@@ -32,7 +31,7 @@ class TestQdrantDockerComposeNetworkIsolation(QdrantDockerComposeTestBase):
             self.temp_dir = None
 
     def test_network_isolation_between_compose_stacks(self):
-        """Test network isolation between different Docker Compose stacks"""
+        """Test network isolation between different Docker Compose stacks."""
         temp_dir2 = None
         compose_file2 = None
 
@@ -64,11 +63,11 @@ volumes:
             compose_content_stack1, self.temp_dir
         )
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert result.returncode == 0
+        assert self.wait_for_qdrant_ready()
 
         response1 = requests.get("http://localhost:6333/healthz", timeout=10)
-        self.assertEqual(response1.status_code, 200)
+        assert response1.status_code == 200
 
         compose_content_stack2 = """
 version: '3.8'
@@ -100,6 +99,7 @@ volumes:
 
             result2 = subprocess.run(
                 ["docker", "compose", "-f", str(compose_file2), "up", "-d"],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=temp_dir2,
@@ -122,8 +122,8 @@ volumes:
 
                 # Verify both stacks are accessible on different ports
                 response2 = requests.get("http://localhost:6334/healthz", timeout=10)
-                self.assertEqual(response1.status_code, 200)
-                self.assertEqual(response2.status_code, 200)
+                assert response1.status_code == 200
+                assert response2.status_code == 200
 
                 # Verify network isolation by checking different networks
                 network1_result = subprocess.run(
@@ -133,6 +133,7 @@ volumes:
                         "test_qdrant_stack1",
                         "--format={{.NetworkSettings.Networks}}",
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
@@ -143,26 +144,28 @@ volumes:
                         "test_qdrant_stack2",
                         "--format={{.NetworkSettings.Networks}}",
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
 
                 if network1_result.returncode == 0 and network2_result.returncode == 0:
-                    self.assertIn("stack1-network", network1_result.stdout)
-                    self.assertIn("stack2-network", network2_result.stdout)
-                    self.assertNotIn("stack2-network", network1_result.stdout)
-                    self.assertNotIn("stack1-network", network2_result.stdout)
+                    assert "stack1-network" in network1_result.stdout
+                    assert "stack2-network" in network2_result.stdout
+                    assert "stack2-network" not in network1_result.stdout
+                    assert "stack1-network" not in network2_result.stdout
         finally:
             if compose_file2 and temp_dir2:
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file2), "down", "-v"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir2,
                 )
                 shutil.rmtree(temp_dir2, ignore_errors=True)
 
     def test_network_security_and_access_control(self):
-        """Test network security and access control scenarios"""
+        """Test network security and access control scenarios."""
         compose_content_isolated = """
 version: '3.8'
 
@@ -194,9 +197,9 @@ volumes:
             compose_content_isolated, self.temp_dir
         )
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         # Dynamically get the network name
         network_name_result = subprocess.run(
@@ -206,10 +209,11 @@ volumes:
                 "test_qdrant_isolated",
                 "--format={{range $key, $value := .NetworkSettings.Networks}}{{$key}}{{end}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(network_name_result.returncode, 0)
+        assert network_name_result.returncode == 0
         network_name = network_name_result.stdout.strip()
 
         # Get Qdrant container IP
@@ -220,6 +224,7 @@ volumes:
                 "test_qdrant_isolated",
                 "--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -240,19 +245,17 @@ volumes:
                 "5",
                 f"http://{qdrant_ip}:6333/healthz",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(
-            same_network_test.returncode,
-            0,
-            f"Same network access should succeed: {same_network_test.stderr}",
-        )
+        assert same_network_test.returncode == 0, f"Same network access should succeed: {same_network_test.stderr}"
 
         # Test connectivity from different network (should fail)
         # Create a separate network for isolation test
         subprocess.run(
             ["docker", "network", "create", "test_isolated_network"],
+            check=False,
             capture_output=True,
         )
 
@@ -271,17 +274,15 @@ volumes:
                     "5",
                     f"http://{qdrant_ip}:6333/healthz",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
             )
-            self.assertNotEqual(
-                different_network_test.returncode,
-                0,
-                "Different network access should fail (network isolation)",
-            )
+            assert different_network_test.returncode != 0, "Different network access should fail (network isolation)"
         finally:
             # Cleanup test network
             subprocess.run(
                 ["docker", "network", "rm", "test_isolated_network"],
+                check=False,
                 capture_output=True,
             )

@@ -1,5 +1,4 @@
-"""
-Test Qdrant Docker Compose service discovery scenarios.
+"""Test Qdrant Docker Compose service discovery scenarios.
 
 This module implements service discovery testing with complex network topologies
 and multi-service communication patterns.
@@ -14,15 +13,15 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeServiceDiscovery(QdrantDockerComposeTestBase):
-    """Test Qdrant service discovery functionality via Docker Compose"""
+    """Test Qdrant service discovery functionality via Docker Compose."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.compose_file = None
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         if self.compose_file:
             self.stop_qdrant_service(self.compose_file, self.temp_dir)
         # Clean up temporary directory
@@ -30,7 +29,7 @@ class TestQdrantDockerComposeServiceDiscovery(QdrantDockerComposeTestBase):
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_service_discovery_complex_network_topologies(self):
-        """Test service discovery with complex network topologies"""
+        """Test service discovery with complex network topologies."""
         compose_content_complex = """
 version: '3.8'
 
@@ -75,17 +74,18 @@ volumes:
 
         result = subprocess.run(
             ["docker", "compose", "-f", str(self.compose_file), "up", "-d"],
+            check=False,
             capture_output=True,
             text=True,
             cwd=self.temp_dir,
         )
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
         # Wait for test client to complete service discovery verification
         max_retries = 30
-        for i in range(max_retries):
+        for _i in range(max_retries):
             client_status = subprocess.run(
                 [
                     "docker",
@@ -93,6 +93,7 @@ volumes:
                     "--format={{.State.Status}}",
                     "test_client_complex",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
             )
@@ -104,6 +105,7 @@ volumes:
 
         logs_result = subprocess.run(
             ["docker", "logs", "test_client_complex"],
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -111,16 +113,11 @@ volumes:
         if logs_result.returncode == 0:
             logs_content = logs_result.stdout + logs_result.stderr
             # Verify service discovery worked
-            self.assertIn("Qdrant accessible via service discovery", logs_content)
+            assert "Qdrant accessible via service discovery" in logs_content
             # Verify actual service discovery verification completed
-            self.assertIn(
-                "Service discovery successful - got service info", logs_content
-            )
-            self.assertTrue(
-                "Service info validated with jq" in logs_content
-                or "Service info contains expected title field" in logs_content
-            )
-            self.assertIn("Service discovery verification complete", logs_content)
+            assert "Service discovery successful - got service info" in logs_content
+            assert "Service info validated with jq" in logs_content or "Service info contains expected title field" in logs_content
+            assert "Service discovery verification complete" in logs_content
 
             # Additional verification: check that client container exited successfully
             exit_code_result = subprocess.run(
@@ -130,15 +127,12 @@ volumes:
                     "--format={{.State.ExitCode}}",
                     "test_client_complex",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
             )
             if exit_code_result.returncode == 0:
                 exit_code = exit_code_result.stdout.strip()
-                self.assertEqual(
-                    exit_code,
-                    "0",
-                    "Test client should exit successfully after service discovery verification",
-                )
+                assert exit_code == "0", "Test client should exit successfully after service discovery verification"
         else:
             self.fail(f"Failed to get logs from test client: {logs_result.stderr}")

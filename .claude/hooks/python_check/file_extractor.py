@@ -1,14 +1,13 @@
-"""
-File path extraction from tool inputs and responses.
-"""
+"""File path extraction from tool inputs and responses."""
 
-from typing import Any, Dict, List, Set, Tuple
-from .config import FILE_MODIFICATION_TOOLS, PYTHON_EXTENSIONS, MARKDOWN_EXTENSIONS
+from typing import Any
+
+from .config import FILE_MODIFICATION_TOOLS, MARKDOWN_EXTENSIONS, PYTHON_EXTENSIONS
 
 
-def _extract_paths_from_payload(payload: Any) -> List[str]:
+def _extract_paths_from_payload(payload: Any) -> list[str]:
     """Recursively extract file paths from tool payload."""
-    paths: List[str] = []
+    paths: list[str] = []
     if payload is None:
         return paths
 
@@ -52,10 +51,10 @@ def _extract_paths_from_payload(payload: Any) -> List[str]:
 
 
 def get_modified_files(
-    tool_name: str, tool_input: Dict[str, Any], tool_response: Dict[str, Any]
-) -> Tuple[List[str], List[str]]:
+    tool_name: str, tool_input: dict[str, Any], tool_response: dict[str, Any]
+) -> tuple[list[str], list[str]]:
     """Extract file paths that were modified from tool input/response."""
-    files: List[str] = []
+    files: list[str] = []
 
     if tool_name in FILE_MODIFICATION_TOOLS:
         # Standard file modification tools – collect from known shapes
@@ -63,8 +62,8 @@ def get_modified_files(
         files.extend(_extract_paths_from_payload(tool_response))
 
     # Dedup and keep order roughly
-    seen: Set[str] = set()
-    deduped: List[str] = []
+    seen: set[str] = set()
+    deduped: list[str] = []
     for f in files:
         if not isinstance(f, str):
             continue

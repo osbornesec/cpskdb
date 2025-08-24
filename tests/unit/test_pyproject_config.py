@@ -33,15 +33,15 @@ class TestPyprojectConfig:
 
     def test_build_system_configuration(self, pyproject_data: dict[str, Any]) -> None:
         """Test build-system section has correct configuration."""
-        assert (
-            "build-system" in pyproject_data
-        ), "pyproject.toml must have [build-system] section"
+        assert "build-system" in pyproject_data, (
+            "pyproject.toml must have [build-system] section"
+        )
 
         build_system = pyproject_data["build-system"]
         assert "requires" in build_system, "[build-system] must have 'requires' field"
-        assert (
-            "build-backend" in build_system
-        ), "[build-system] must have 'build-backend' field"
+        assert "build-backend" in build_system, (
+            "[build-system] must have 'build-backend' field"
+        )
 
         # Check setuptools requirement
         requires = build_system["requires"]
@@ -50,14 +50,14 @@ class TestPyprojectConfig:
             (req for req in requires if req.startswith("setuptools")), None
         )
         assert setuptools_req is not None, "setuptools must be in build requirements"
-        assert (
-            ">=61.2" in setuptools_req
-        ), "setuptools must be >= 61.2 for PEP 621 support"
+        assert ">=61.2" in setuptools_req, (
+            "setuptools must be >= 61.2 for PEP 621 support"
+        )
 
         # Check build backend
-        assert (
-            build_system["build-backend"] == "setuptools.build_meta"
-        ), "build-backend must be setuptools.build_meta"
+        assert build_system["build-backend"] == "setuptools.build_meta", (
+            "build-backend must be setuptools.build_meta"
+        )
 
     def test_project_metadata_completeness(
         self, pyproject_data: dict[str, Any]
@@ -71,9 +71,9 @@ class TestPyprojectConfig:
         assert "name" in project, "[project] must have 'name' field"
         assert "version" in project, "[project] must have 'version' field"
         assert "description" in project, "[project] must have 'description' field"
-        assert (
-            "requires-python" in project
-        ), "[project] must have 'requires-python' field"
+        assert "requires-python" in project, (
+            "[project] must have 'requires-python' field"
+        )
 
         # Check project name
         assert project["name"] == "cpskdb", "Project name must be 'cpskdb'"
@@ -81,18 +81,18 @@ class TestPyprojectConfig:
         # Check description matches project purpose
         description = project["description"].lower()
         assert "rag" in description, "Description must mention RAG system"
-        assert (
-            "agentic" in description or "agent" in description
-        ), "Description must mention agentic/agent capabilities"
+        assert "agentic" in description or "agent" in description, (
+            "Description must mention agentic/agent capabilities"
+        )
 
     def test_python_version_requirement(self, pyproject_data: dict[str, Any]) -> None:
         """Test Python version requirement is >= 3.11."""
         project = pyproject_data["project"]
         python_req = project["requires-python"]
 
-        assert (
-            python_req == ">=3.11"
-        ), f"Python requirement must be '>=3.11', got '{python_req}'"
+        assert python_req == ">=3.11", (
+            f"Python requirement must be '>=3.11', got '{python_req}'"
+        )
 
     def test_project_authors_and_license(self, pyproject_data: dict[str, Any]) -> None:
         """Test authors and license are properly configured."""
@@ -113,12 +113,12 @@ class TestPyprojectConfig:
         # Check license
         if "license" in project:
             license_info = project["license"]
-            assert isinstance(
-                license_info, dict
-            ), "license must be a dict with 'text' or 'file'"
-            assert (
-                "text" in license_info or "file" in license_info
-            ), "license must have either 'text' or 'file' field"
+            assert isinstance(license_info, dict), (
+                "license must be a dict with 'text' or 'file'"
+            )
+            assert "text" in license_info or "file" in license_info, (
+                "license must have either 'text' or 'file' field"
+            )
 
     def test_project_keywords_and_classifiers(
         self, pyproject_data: dict[str, Any]
@@ -137,9 +137,9 @@ class TestPyprojectConfig:
 
             # At least some expected keywords should be present
             overlap = expected_keywords.intersection(keyword_set)
-            assert (
-                len(overlap) >= 2
-            ), f"Keywords should include RAG-related terms, got {keywords}"
+            assert len(overlap) >= 2, (
+                f"Keywords should include RAG-related terms, got {keywords}"
+            )
 
         # Check classifiers if present
         if "classifiers" in project:
@@ -169,9 +169,9 @@ class TestPyprojectConfig:
         minor = int(version_parts[1])
 
         assert major >= 3, "Python major version must be at least 3"
-        assert (
-            major == 3 and minor >= 11
-        ), f"Python version must be at least 3.11, got {version_str}"
+        assert major == 3 and minor >= 11, (
+            f"Python version must be at least 3.11, got {version_str}"
+        )
 
     def test_toml_syntax_validation(self, pyproject_path: pathlib.Path) -> None:
         """Test that pyproject.toml has valid TOML syntax."""
@@ -267,9 +267,9 @@ class TestPyprojectDependencies:
 
             if any(op in dep for op in [">=", "==", "<", "!=", "~="]):
                 versions = re.findall(r"(\d+)\.(\d+)\.(\d+)", dep)
-                assert (
-                    len(versions) > 0
-                ), f"Dependency '{dep}' should have semantic version (x.y.z)"
+                assert len(versions) > 0, (
+                    f"Dependency '{dep}' should have semantic version (x.y.z)"
+                )
 
     def test_critical_version_requirements(
         self, pyproject_data: dict[str, Any]
@@ -284,9 +284,9 @@ class TestPyprojectDependencies:
 
             # FastAPI should be >= 0.113.0
             if dep_lower.startswith("fastapi"):
-                assert (
-                    ">=0.113" in dep or ">=0.114" in dep or ">=0.115" in dep
-                ), f"FastAPI should be >= 0.113.0, got: {dep}"
+                assert ">=0.113" in dep or ">=0.114" in dep or ">=0.115" in dep, (
+                    f"FastAPI should be >= 0.113.0, got: {dep}"
+                )
 
             # LangGraph should be >= 0.3.27
             elif dep_lower.startswith("langgraph"):
@@ -312,15 +312,15 @@ class TestPyprojectDependencies:
 
         # FastAPI should have [standard] extra
         if "fastapi" in extras_found:
-            assert (
-                "standard" in extras_found["fastapi"]
-            ), f"FastAPI should include [standard] extra, got: {extras_found.get('fastapi', 'none')}"
+            assert "standard" in extras_found["fastapi"], (
+                f"FastAPI should include [standard] extra, got: {extras_found.get('fastapi', 'none')}"
+            )
 
         # Qdrant-client should have [fastembed] extra if present
         if "qdrant-client" in extras_found:
-            assert (
-                "fastembed" in extras_found["qdrant-client"]
-            ), "Qdrant-client should include [fastembed] extra"
+            assert "fastembed" in extras_found["qdrant-client"], (
+                "Qdrant-client should include [fastembed] extra"
+            )
 
     def test_configuration_dependencies_present(
         self, pyproject_data: dict[str, Any]
@@ -347,6 +347,6 @@ class TestPyprojectDependencies:
         config_deps = {"python-dotenv", "pyyaml"}
 
         missing_config = config_deps - dep_names
-        assert (
-            not missing_config
-        ), f"Missing configuration dependencies: {missing_config}"
+        assert not missing_config, (
+            f"Missing configuration dependencies: {missing_config}"
+        )

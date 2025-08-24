@@ -1,6 +1,4 @@
-"""
-Basic functionality tests for Qdrant Docker Compose configuration
-"""
+"""Basic functionality tests for Qdrant Docker Compose configuration."""
 
 import subprocess
 import tempfile
@@ -9,14 +7,13 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: 
 
 
 class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
-    """Basic functionality tests for Qdrant Docker Compose configuration"""
+    """Basic functionality tests for Qdrant Docker Compose configuration."""
 
     def test_qdrant_service_starts_successfully(self):
-        """
-        Test: Qdrant Service Starts Successfully
+        """Test: Qdrant Service Starts Successfully
         Given: Docker Compose file with Qdrant service configuration
         When: Running `docker compose up qdrant`
-        Then: Qdrant container starts without errors
+        Then: Qdrant container starts without errors.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             compose_file = self.setup_compose_file(
@@ -26,9 +23,7 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
             result = self.start_qdrant_service(compose_file, temp_dir)
 
             try:
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Verify container is running
                 check_result = subprocess.run(
@@ -40,22 +35,20 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
                         "--format",
                         "{{.Status}}",
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
-                self.assertIn(
-                    "Up", check_result.stdout, "Qdrant container is not running"
-                )
+                assert "Up" in check_result.stdout, "Qdrant container is not running"
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_port_accessibility_and_health_check(self):
-        """
-        Test: Qdrant Exposes Port 6333 Correctly and Health Endpoint Returns Valid Response
+        """Test: Qdrant Exposes Port 6333 Correctly and Health Endpoint Returns Valid Response
         Given: Qdrant service is configured with port mapping 6333:6333
         When: Service is started
-        Then: Port 6333 is accessible and health endpoint responds
+        Then: Port 6333 is accessible and health endpoint responds.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             compose_file = self.setup_compose_file(
@@ -65,14 +58,10 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
             result = self.start_qdrant_service(compose_file, temp_dir)
 
             try:
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Wait for service to be ready
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
 
                 # Assert health endpoint is accessible
                 self.assert_qdrant_healthy()
@@ -81,11 +70,10 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_storage_volume_persistence(self):
-        """
-        Test: Qdrant Storage Volume Mounts Correctly
+        """Test: Qdrant Storage Volume Mounts Correctly
         Given: Docker Compose configuration includes storage volume mapping
         When: Container is started and restarted
-        Then: Data persists across container restarts
+        Then: Data persists across container restarts.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             compose_file = self.setup_compose_file(
@@ -94,14 +82,10 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Wait for service to be ready
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
 
                 # Create a test collection
                 self.create_test_collection("persistence_test")
@@ -109,15 +93,13 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
                 # Restart the container
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "restart", "qdrant"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )
 
                 # Wait for service to be ready after restart
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(),
-                    "Qdrant service not ready after restart",
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready after restart"
 
                 # Assert collection still exists after restart
                 self.verify_collection_exists("persistence_test")
@@ -126,11 +108,10 @@ class TestQdrantDockerComposeBasic(QdrantDockerComposeTestBase):
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_environment_variable_configuration(self):
-        """
-        Test: Qdrant Uses Configured Log Level
+        """Test: Qdrant Uses Configured Log Level
         Given: Environment variable QDRANT__LOG_LEVEL is set
         When: Container starts
-        Then: Qdrant respects the configured log level
+        Then: Qdrant respects the configured log level.
         """
         compose_content = """
 version: '3.8'
@@ -154,14 +135,10 @@ volumes:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Wait for service to be ready
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
 
                 # Verify service is accessible
                 self.assert_qdrant_healthy()
@@ -169,10 +146,11 @@ volumes:
                 # Check logs for debug information
                 logs_result = subprocess.run(
                     ["docker", "logs", "test_qdrant_env"],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )
-                self.assertEqual(logs_result.returncode, 0)
+                assert logs_result.returncode == 0
                 logs_text = logs_result.stdout.lower()
 
                 # Require evidence of DEBUG logging when QDRANT__LOG_LEVEL=DEBUG
@@ -183,10 +161,7 @@ volumes:
                     " debug ",
                 ]
                 found_debug = any(ind in logs_text for ind in debug_indicators)
-                self.assertTrue(
-                    found_debug,
-                    f"Expected DEBUG indicators {debug_indicators} in logs but none were found. Logs: {logs_text[:800]}",
-                )
+                assert found_debug, f"Expected DEBUG indicators {debug_indicators} in logs but none were found. Logs: {logs_text[:800]}"
 
                 # Optional: also ensure service reached a ready/running state
                 startup_indicators = [
@@ -196,9 +171,6 @@ volumes:
                     "listening",
                     "qdrant",
                 ]
-                self.assertTrue(
-                    any(ind in logs_text for ind in startup_indicators),
-                    f"Expected startup indicators {startup_indicators} in logs. Logs: {logs_text[:800]}",
-                )
+                assert any(ind in logs_text for ind in startup_indicators), f"Expected startup indicators {startup_indicators} in logs. Logs: {logs_text[:800]}"
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)

@@ -1,5 +1,4 @@
-"""
-Tests for Qdrant Docker Compose advanced features edge cases.
+"""Tests for Qdrant Docker Compose advanced features edge cases.
 
 This module implements resource limits, profiles, healthchecks, and dependencies edge cases.
 """
@@ -54,15 +53,13 @@ services:
                 # If not ready, check that container is still running (not crashed)
                 check_result = subprocess.run(
                     ["docker", "ps", "-q", "--filter", "name=qdrant-test"],
+                    check=False,
                     capture_output=True,
                     text=True,
                     timeout=30,
                 )
                 # Assert container exists (still running or stopped gracefully)
-                self.assertIsNotNone(
-                    check_result.stdout.strip() or None,
-                    "Container should exist even if not ready due to resource constraints",
-                )
+                assert (check_result.stdout.strip() or None) is not None, "Container should exist even if not ready due to resource constraints"
         else:
             # Check that stderr contains resource-related error messages
             error_output = result.stderr.lower() if result.stderr else ""
@@ -79,10 +76,7 @@ services:
             )
 
             # Assert resource error is present in stderr for failed startup
-            self.assertTrue(
-                has_resource_error,
-                f"Expected resource-related error in stderr. Got: '{result.stderr}'",
-            )
+            assert has_resource_error, f"Expected resource-related error in stderr. Got: '{result.stderr}'"
 
     def test_docker_compose_profiles_edge_cases(self):
         """Test Docker Compose profiles feature edge cases."""
@@ -127,13 +121,14 @@ services:
                 "up",
                 "-d",
             ],
+            check=False,
             capture_output=True,
             cwd=self.temp_dir,
             timeout=30,
         )
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()
 
     def test_docker_compose_healthcheck_edge_cases(self):
         """Test Docker Compose healthcheck configurations edge cases."""
@@ -155,7 +150,7 @@ services:
 
         self.compose_file = self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
         # Wait a bit for health checks to run
         time.sleep(5)
@@ -169,6 +164,7 @@ services:
                 "{{.State.Health.Status}}",
                 "qdrant-test",
             ],
+            check=False,
             capture_output=True,
             text=True,
             timeout=30,
@@ -177,7 +173,7 @@ services:
         if health_result.returncode == 0:
             # Health status should be either starting, healthy, or unhealthy
             status = health_result.stdout.strip()
-            self.assertIn(status, ["starting", "healthy", "unhealthy"])
+            assert status in ["starting", "healthy", "unhealthy"]
 
     def test_docker_compose_depends_on_edge_cases(self):
         """Test Docker Compose depends_on configurations edge cases."""
@@ -207,6 +203,6 @@ services:
 
         self.compose_file = self.setup_compose_file(compose_content)
         result = self.start_qdrant_service(self.compose_file, self.temp_dir)
-        self.assertEqual(result.returncode, 0)
+        assert result.returncode == 0
 
-        self.assertTrue(self.wait_for_qdrant_ready())
+        assert self.wait_for_qdrant_ready()

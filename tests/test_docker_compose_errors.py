@@ -1,6 +1,4 @@
-"""
-Error handling and edge case tests for Qdrant Docker Compose configuration
-"""
+"""Error handling and edge case tests for Qdrant Docker Compose configuration."""
 
 import subprocess
 import tempfile
@@ -10,14 +8,13 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: 
 
 
 class TestQdrantDockerComposeErrors(QdrantDockerComposeTestBase):
-    """Error handling and edge case tests for Qdrant Docker Compose configuration"""
+    """Error handling and edge case tests for Qdrant Docker Compose configuration."""
 
     def test_qdrant_port_conflict_error_handling(self):
-        """
-        Test: Qdrant Handles Port Conflicts
+        """Test: Qdrant Handles Port Conflicts
         Given: Port 6333 already in use by another service
         When: Starting Qdrant service
-        Then: Clear error about port conflict
+        Then: Clear error about port conflict.
         """
         # Start a dummy service on port 6333 first
         dummy_container = subprocess.run(
@@ -32,14 +29,13 @@ class TestQdrantDockerComposeErrors(QdrantDockerComposeTestBase):
                 "6333:80",
                 "nginx:alpine",
             ],
+            check=False,
             capture_output=True,
             text=True,
         )
 
         try:
-            self.assertEqual(
-                dummy_container.returncode, 0, "Failed to start dummy container"
-            )
+            assert dummy_container.returncode == 0, "Failed to start dummy container"
             time.sleep(3)
 
             compose_content = """
@@ -58,9 +54,7 @@ services:
                 result = self.start_qdrant_service(compose_file, temp_dir)
 
                 # Should fail with port conflict error
-                self.assertNotEqual(
-                    result.returncode, 0, "Expected failure due to port conflict"
-                )
+                assert result.returncode != 0, "Expected failure due to port conflict"
                 error_output = result.stderr.lower()
                 port_conflict_indicators = [
                     "port",
@@ -68,27 +62,22 @@ services:
                     "address already in use",
                     "6333",
                 ]
-                self.assertTrue(
-                    any(
-                        indicator in error_output
-                        for indicator in port_conflict_indicators
-                    ),
-                    f"Expected port conflict error, got: {result.stderr}",
-                )
+                assert any(indicator in error_output for indicator in port_conflict_indicators), f"Expected port conflict error, got: {result.stderr}"
 
                 self.stop_qdrant_service(compose_file, temp_dir)
 
         finally:
             subprocess.run(
-                ["docker", "stop", "dummy_port_blocker"], capture_output=True
+                ["docker", "stop", "dummy_port_blocker"],
+                check=False,
+                capture_output=True,
             )
 
     def test_qdrant_invalid_image_error_handling(self):
-        """
-        Test: Qdrant Handles Invalid Image Tag
+        """Test: Qdrant Handles Invalid Image Tag
         Given: Qdrant service configured with non-existent image tag
         When: Attempting to start service
-        Then: Docker reports image not found error
+        Then: Docker reports image not found error.
         """
         compose_content = """
 version: '3.8'
@@ -107,9 +96,7 @@ services:
 
             try:
                 # Should fail with image not found error
-                self.assertNotEqual(
-                    result.returncode, 0, "Expected failure due to invalid image"
-                )
+                assert result.returncode != 0, "Expected failure due to invalid image"
                 error_output = result.stderr.lower()
                 image_error_indicators = [
                     "pull",
@@ -117,23 +104,16 @@ services:
                     "manifest unknown",
                     "image",
                 ]
-                self.assertTrue(
-                    any(
-                        indicator in error_output
-                        for indicator in image_error_indicators
-                    ),
-                    f"Expected image error, got: {result.stderr}",
-                )
+                assert any(indicator in error_output for indicator in image_error_indicators), f"Expected image error, got: {result.stderr}"
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_malformed_compose_config_error(self):
-        """
-        Test: Qdrant Handles Malformed Docker Compose Configuration
+        """Test: Qdrant Handles Malformed Docker Compose Configuration
         Given: Docker Compose file with syntax errors in Qdrant section
         When: Running `docker compose up`
-        Then: Clear error message about configuration issues
+        Then: Clear error message about configuration issues.
         """
         compose_content = """
 version: '3.8'
@@ -156,18 +136,14 @@ services:
 
             result = subprocess.run(
                 ["docker", "compose", "-f", str(compose_file), "config"],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=temp_dir,
             )
 
             # Should fail with configuration error
-            self.assertNotEqual(
-                result.returncode, 0, "Expected failure due to malformed config"
-            )
+            assert result.returncode != 0, "Expected failure due to malformed config"
             error_output = result.stderr.lower()
             config_error_indicators = ["yaml", "syntax", "invalid", "error", "parse"]
-            self.assertTrue(
-                any(indicator in error_output for indicator in config_error_indicators),
-                f"Expected configuration error, got: {result.stderr}",
-            )
+            assert any(indicator in error_output for indicator in config_error_indicators), f"Expected configuration error, got: {result.stderr}"

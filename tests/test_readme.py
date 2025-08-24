@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+
 import pytest
 
 
@@ -40,10 +41,14 @@ class TestREADMEStructure:
         ]
 
         # Pre-compile regex patterns for better performance
-        compiled_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in required_sections]
-        
+        compiled_patterns = [
+            re.compile(pattern, re.IGNORECASE) for pattern in required_sections
+        ]
+
         for i, compiled_pattern in enumerate(compiled_patterns):
-            assert compiled_pattern.search(content), f"Required section not found: {required_sections[i]}"
+            assert compiled_pattern.search(content), (
+                f"Required section not found: {required_sections[i]}"
+            )
 
 
 class TestREADMEContent:
@@ -67,9 +72,9 @@ class TestREADMEContent:
                 description_found = True
                 break
 
-        assert (
-            description_found
-        ), "README must contain clear project description with key concepts"
+        assert description_found, (
+            "README must contain clear project description with key concepts"
+        )
 
     def test_technology_stack_documented(self, readme_content: str) -> None:
         """Test that technology stack is properly documented."""
@@ -86,9 +91,9 @@ class TestREADMEContent:
         ]
 
         for tech in required_tech:
-            assert re.search(
-                tech, content, re.IGNORECASE
-            ), f"Technology {tech} must be mentioned in README"
+            assert re.search(tech, content, re.IGNORECASE), (
+                f"Technology {tech} must be mentioned in README"
+            )
 
     def test_installation_instructions_exist(self, readme_content: str) -> None:
         """Test that installation section has actual instructions."""
@@ -109,9 +114,9 @@ class TestREADMEContent:
                 install_found = True
                 break
 
-        assert (
-            install_found
-        ), "Installation section must contain actual installation commands"
+        assert install_found, (
+            "Installation section must contain actual installation commands"
+        )
 
 
 class TestREADMEFormatting:
@@ -127,7 +132,7 @@ class TestREADMEFormatting:
         in_block = False
         for i, line in enumerate(lines):
             # Support both backticks (```) and tildes (~~~) for code fences
-            if line.startswith("```") or line.startswith("~~~"):
+            if line.startswith(("```", "~~~")):
                 if not in_block:
                     # Opening fence - handle both ``` and ~~~
                     if line.startswith("```"):
@@ -142,9 +147,9 @@ class TestREADMEFormatting:
                     in_block = False
 
         # Should have code blocks with language specification
-        assert (
-            len(opening_blocks) > 0
-        ), "README should contain code blocks with examples"
+        assert len(opening_blocks) > 0, (
+            "README should contain code blocks with examples"
+        )
 
         # Check that all opening blocks have language specified
         missing = [
@@ -183,6 +188,6 @@ class TestREADMEFormatting:
 
             # Level should not increase by more than 1
             if current_level > prev_level:
-                assert (
-                    current_level - prev_level <= 1
-                ), f"Header hierarchy violation: jumping from h{prev_level} to h{current_level}"
+                assert current_level - prev_level <= 1, (
+                    f"Header hierarchy violation: jumping from h{prev_level} to h{current_level}"
+                )

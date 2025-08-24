@@ -1,6 +1,4 @@
-"""
-Edge cases and boundary condition tests for Qdrant Docker Compose configuration
-"""
+"""Edge cases and boundary condition tests for Qdrant Docker Compose configuration."""
 
 import subprocess
 import tempfile
@@ -12,14 +10,13 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase  # type: 
 
 
 class TestQdrantDockerComposeEdgeCases(QdrantDockerComposeTestBase):
-    """Edge cases and boundary condition tests for Qdrant Docker Compose configuration"""
+    """Edge cases and boundary condition tests for Qdrant Docker Compose configuration."""
 
     def test_qdrant_missing_environment_variables(self):
-        """
-        Test: Qdrant Handles Missing Environment Variables
+        """Test: Qdrant Handles Missing Environment Variables
         Given: Docker Compose configuration without QDRANT__LOG_LEVEL
         When: Container starts
-        Then: Qdrant uses default log level
+        Then: Qdrant uses default log level.
         """
         compose_content = """
 version: '3.8'
@@ -41,34 +38,29 @@ volumes:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Wait for service to be ready
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
 
                 # Service should start successfully with defaults
                 self.assert_qdrant_healthy()
 
                 # Verify service info endpoint works
                 info_response = requests.get("http://localhost:6333/", timeout=10)
-                self.assertEqual(info_response.status_code, 200)
+                assert info_response.status_code == 200
                 service_info = info_response.json()
-                self.assertIn("title", service_info)
-                self.assertIn("qdrant", service_info["title"].lower())
+                assert "title" in service_info
+                assert "qdrant" in service_info["title"].lower()
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_missing_storage_volume(self):
-        """
-        Test: Qdrant Handles Missing Storage Volume
+        """Test: Qdrant Handles Missing Storage Volume
         Given: Docker Compose configuration without storage volume
         When: Container starts
-        Then: Qdrant uses ephemeral storage (data lost on container removal)
+        Then: Qdrant uses ephemeral storage (data lost on container removal).
         """
         compose_content = """
 version: '3.8'
@@ -87,14 +79,10 @@ services:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
                 # Wait for service to be ready
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
 
                 # Service should start successfully
                 self.assert_qdrant_healthy()
@@ -105,38 +93,32 @@ services:
                 # Stop and remove container (with volume cleanup for clean test)
                 subprocess.run(
                     ["docker", "compose", "-f", str(compose_file), "down", "-v"],
+                    check=False,
                     capture_output=True,
                     cwd=temp_dir,
                 )
 
                 # Start again - data should be gone
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(result.returncode, 0)
+                assert result.returncode == 0
 
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Service not ready after restart"
-                )
+                assert self.wait_for_qdrant_ready(), "Service not ready after restart"
 
                 # Collection should be gone since no volume persistence
                 get_response = requests.get(
                     "http://localhost:6333/collections/ephemeral_test", timeout=10
                 )
                 # Should return 404 indicating no persistence without volumes
-                self.assertEqual(
-                    get_response.status_code,
-                    404,
-                    f"Expected collection to be gone without volumes, but got: {get_response.status_code}",
-                )
+                assert get_response.status_code == 404, f"Expected collection to be gone without volumes, but got: {get_response.status_code}"
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_invalid_port_configuration(self):
-        """
-        Test: Qdrant Invalid Port Numbers
+        """Test: Qdrant Invalid Port Numbers
         Given: Port configuration with zero or negative values
         When: Attempting to start service
-        Then: Docker Compose validation fails
+        Then: Docker Compose validation fails.
         """
         compose_content = """
 version: '3.8'
@@ -154,6 +136,7 @@ services:
             # Try to validate the configuration
             result = subprocess.run(
                 ["docker", "compose", "-f", str(compose_file), "config"],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=temp_dir,

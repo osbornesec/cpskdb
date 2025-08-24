@@ -1,7 +1,6 @@
-"""
-Advanced edge cases and boundary condition tests for Qdrant Docker Compose
-"""
+"""Advanced edge cases and boundary condition tests for Qdrant Docker Compose."""
 
+import contextlib
 import subprocess
 import tempfile
 import time
@@ -11,10 +10,10 @@ from tests.test_docker_compose_base import QdrantDockerComposeTestBase
 
 
 class TestQdrantDockerComposeAdvancedEdgeCases(QdrantDockerComposeTestBase):
-    """Advanced edge cases and boundary condition tests"""
+    """Advanced edge cases and boundary condition tests."""
 
     def test_qdrant_volume_permission_errors(self):
-        """Test: Qdrant Volume Mount Permission Errors"""
+        """Test: Qdrant Volume Mount Permission Errors."""
         with tempfile.TemporaryDirectory() as temp_dir:
             restricted_dir = Path(temp_dir) / "restricted_storage"
             restricted_dir.mkdir()
@@ -41,6 +40,7 @@ services:
                     time.sleep(5)
                     logs_result = subprocess.run(
                         ["docker", "logs", "test_qdrant_permissions"],
+                        check=False,
                         capture_output=True,
                         text=True,
                     )
@@ -53,23 +53,15 @@ services:
                         "cannot write",
                         "read-only",
                     ]
-                    self.assertTrue(
-                        any(
-                            indicator in logs_text
-                            for indicator in permission_indicators
-                        ),
-                        f"Expected permission errors in logs: {logs_text[:500]}",
-                    )
+                    assert any(indicator in logs_text for indicator in permission_indicators), f"Expected permission errors in logs: {logs_text[:500]}"
 
             finally:
-                try:
+                with contextlib.suppress(Exception):
                     restricted_dir.chmod(0o755)
-                except Exception:
-                    pass
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_invalid_environment_variable_values(self):
-        """Test: Qdrant Invalid Environment Variable Values"""
+        """Test: Qdrant Invalid Environment Variable Values."""
         compose_content = """
 version: '3.8'
 services:
@@ -97,6 +89,7 @@ volumes:
                     time.sleep(5)
                     logs_result = subprocess.run(
                         ["docker", "logs", "test_qdrant_invalid_env"],
+                        check=False,
                         capture_output=True,
                         text=True,
                     )
@@ -116,13 +109,7 @@ volumes:
                                 "config",
                                 "parse",
                             ]
-                            self.assertTrue(
-                                any(
-                                    indicator in logs_text
-                                    for indicator in config_error_indicators
-                                ),
-                                f"Expected config error handling in logs: {logs_text[:500]}",
-                            )
+                            assert any(indicator in logs_text for indicator in config_error_indicators), f"Expected config error handling in logs: {logs_text[:500]}"
                     except requests.exceptions.RequestException as e:
                         # All HTTP-related errors including timeouts
                         self.fail(
@@ -136,19 +123,13 @@ volumes:
                             "parse",
                             "failed",
                         ]
-                        self.assertTrue(
-                            any(
-                                indicator in logs_text
-                                for indicator in config_error_indicators
-                            ),
-                            f"Expected config error messages: {logs_text[:500]}",
-                        )
+                        assert any(indicator in logs_text for indicator in config_error_indicators), f"Expected config error messages: {logs_text[:500]}"
 
             finally:
                 self.stop_qdrant_service(compose_file, temp_dir)
 
     def test_qdrant_recovery_from_temporary_storage_issues(self):
-        """Test: Qdrant Recovers from Temporary Storage Issues"""
+        """Test: Qdrant Recovers from Temporary Storage Issues."""
         with tempfile.TemporaryDirectory() as temp_dir:
             storage_dir = Path(temp_dir) / "qdrant_storage"
             storage_dir.mkdir()
@@ -172,13 +153,9 @@ services:
 
             try:
                 result = self.start_qdrant_service(compose_file, temp_dir)
-                self.assertEqual(
-                    result.returncode, 0, f"Docker compose failed: {result.stderr}"
-                )
+                assert result.returncode == 0, f"Docker compose failed: {result.stderr}"
 
-                self.assertTrue(
-                    self.wait_for_qdrant_ready(), "Qdrant service not ready"
-                )
+                assert self.wait_for_qdrant_ready(), "Qdrant service not ready"
                 self.create_test_collection("recovery_test")
 
                 original_perms = storage_dir.stat().st_mode
@@ -197,6 +174,7 @@ services:
                             "20",
                             "test_qdrant_storage_recovery",
                         ],
+                        check=False,
                         capture_output=True,
                         text=True,
                         cwd=temp_dir,
@@ -224,8 +202,6 @@ services:
                 self.verify_collection_exists("recovery_test")
 
             finally:
-                try:
+                with contextlib.suppress(Exception):
                     storage_dir.chmod(0o755)
-                except Exception:
-                    pass
                 self.stop_qdrant_service(compose_file, temp_dir)

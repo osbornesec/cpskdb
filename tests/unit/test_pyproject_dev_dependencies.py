@@ -3,7 +3,6 @@
 import tempfile
 import tomllib
 from pathlib import Path
-from typing import Dict, Any
 
 import pytest
 
@@ -42,23 +41,23 @@ dependencies = [
     # Core Framework
     "fastapi[standard]>=0.113.0,<0.116.0",
     "pydantic>=2.7.0,<3.0.0",
-    
+
     # AI/ML Orchestration
     "langgraph>=0.3.27",
     "langchain>=0.2.0",
     "langchain-core>=0.2.38",
-    
+
     # Vector Database
     "qdrant-client[fastembed]>=1.7.0",
-    
+
     # LLM/Embedding Providers
     "voyageai>=0.3.2",
     "cohere>=5.15.0",
-    
+
     # HTTP Client & Server
     "httpx[http2]>=0.25.0",
     "uvicorn[standard]>=0.26.0",
-    
+
     # Configuration Management
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0.0",
@@ -120,8 +119,11 @@ dependencies = [
             pytest_dep = next((dep for dep in dev_deps if "pytest" in dep), None)
             assert pytest_dep is not None
             assert (
-                ">=" in pytest_dep and "<" in pytest_dep
-            )  # Should have both lower and upper bounds
+                ">=" in pytest_dep
+            )
+            assert (
+                "<" in pytest_dep
+            )
 
             ruff_dep = next((dep for dep in dev_deps if "ruff" in dep), None)
             assert ruff_dep is not None
